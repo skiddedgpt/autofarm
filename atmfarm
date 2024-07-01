@@ -20,6 +20,7 @@ getgenv().codes = getgenv().codes or {
 }
 print("Codes set to: ", table.concat(getgenv().codes, ", "))
 
+-- Redeem promo codes
 local function handleRedeemCommand(code)
     local args = {
         [1] = "EnterPromoCode",
@@ -28,7 +29,19 @@ local function handleRedeemCommand(code)
     game:GetService("ReplicatedStorage"):WaitForChild("MainEvent"):FireServer(unpack(args))
 end
 
-for _, code in ipairs(getgenv().codes) do
-    handleRedeemCommand(code)
-    print("Redeeming code: ", code)  -- Debug print to confirm code redemption
+-- If getgenv().codes is set, use those codes; otherwise, use default internal values
+if getgenv().codes then
+    for _, code in ipairs(getgenv().codes) do
+        handleRedeemCommand(code)
+        print("Redeeming code: ", code)  -- Debug print to confirm code redemption
+    end
+else
+    -- Default behavior if getgenv().codes is not set
+    for _, code in ipairs({
+        "CODE1",
+        "CODE2"
+    }) do
+        handleRedeemCommand(code)
+        print("Redeeming default code: ", code)  -- Debug print for default codes
+    end
 end
