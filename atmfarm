@@ -1,5 +1,6 @@
 -- Use existing getgenv().fps if set, otherwise default to 60
 getgenv().fps = getgenv().fps or 60
+print("FPS set to: ", getgenv().fps)
 
 local function controlFPS()
     local RunService = game:GetService("RunService")
@@ -17,6 +18,7 @@ getgenv().codes = getgenv().codes or {
     "CODE1",
     "CODE2"
 }
+print("Codes set to: ", table.concat(getgenv().codes, ", "))
 
 local function handleRedeemCommand(code)
     local args = {
