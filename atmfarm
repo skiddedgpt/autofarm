@@ -1,4 +1,5 @@
-getgenv().fps = 60
+-- Use existing getgenv().fps if set, otherwise default to 60
+getgenv().fps = getgenv().fps or 60
 
 local function controlFPS()
     local RunService = game:GetService("RunService")
@@ -11,7 +12,8 @@ end
 
 spawn(controlFPS)
 
-getgenv().codes = {
+-- Use existing getgenv().codes if set, otherwise default to internal values
+getgenv().codes = getgenv().codes or {
     "CODE1",
     "CODE2"
 }
