@@ -1,0 +1,26 @@
+getgenv().fps = 5
+
+local function controlFPS()
+    local RunService = game:GetService("RunService")
+    while true do
+        local t0 = tick()
+        RunService.Heartbeat:Wait()
+        repeat until (t0 + 1/getgenv().fps) < tick()
+    end
+end
+
+spawn(controlFPS)
+
+getgenv().codes = {
+    "CODEHERE",
+    "CODEHERE"
+}
+
+local function handleRedeemCommand(code)
+    local localPlayer = game.Players.LocalPlayer
+    game:GetService("ReplicatedStorage").MainEvent:FireServer("EnterPromoCode", code)
+end
+
+for _, code in ipairs(getgenv().codes) do
+    handleRedeemCommand(code)
+end
