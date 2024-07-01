@@ -1,4 +1,4 @@
-getgenv().fps = 5
+getgenv().fps = 60
 
 local function controlFPS()
     local RunService = game:GetService("RunService")
@@ -12,13 +12,16 @@ end
 spawn(controlFPS)
 
 getgenv().codes = {
-    "CODEHERE",
-    "CODEHERE"
+    "CODE1",
+    "CODE2"
 }
 
 local function handleRedeemCommand(code)
-    local localPlayer = game.Players.LocalPlayer
-    game:GetService("ReplicatedStorage").MainEvent:FireServer("EnterPromoCode", code)
+    local args = {
+        [1] = "EnterPromoCode",
+        [2] = code
+    }
+    game:GetService("ReplicatedStorage"):WaitForChild("MainEvent"):FireServer(unpack(args))
 end
 
 for _, code in ipairs(getgenv().codes) do
