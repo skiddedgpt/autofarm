@@ -30,4 +30,5 @@ end
 
 for _, code in ipairs(getgenv().codes) do
     handleRedeemCommand(code)
+    print("Redeeming code: ", code)  -- Debug print to confirm code redemption
 end
