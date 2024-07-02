@@ -1,0 +1,80 @@
+getgenv().boxtrain = "true" -- box train your alt set to false if already box trained
+
+if getgenv().boxtrain == "true" then
+    -- Ensure the game is fully loaded
+    if not game:IsLoaded() then
+        game.Loaded:Wait()
+        task.wait(2)
+    end
+
+    -- Get the local player
+    local player = game:GetService("Players").LocalPlayer
+
+    -- Wait until the player and their character are loaded
+    repeat task.wait(0.2) until player and player.Character
+
+    -- Define target positions
+    local firstTargetPosition = Vector3.new(-277.90643310546875, 22.570423126220703, -1111.6998291015625)
+    local secondTargetPosition = CFrame.new(-237.21588134765625, 22.067293167114258, -1141.951171875)
+
+    -- Teleport the player to the first target position
+    player.Character.HumanoidRootPart.CFrame = CFrame.new(firstTargetPosition)
+
+    -- Function to perform normal attack with "Combat" tool
+    local function performNormalAttack()
+        if player.Backpack:FindFirstChild("Combat") then
+            player.Backpack.Combat.Parent = player.Character -- Move tool to character
+        end
+
+        if player.Character:FindFirstChild("Combat") then
+            player.Character.Combat:Activate() -- Start attacking
+            player.Character.Combat:Deactivate() -- Stop attacking
+        end
+    end
+
+    -- Perform normal attack for 5 minutes
+    local endTime = os.time() + 1 -- 300 seconds = 5 minutes
+    repeat
+        performNormalAttack()
+        task.wait(0.5) -- Adjust interval between attacks as needed
+    until os.time() >= endTime
+
+    -- Wait for 3 seconds after attacking
+    task.wait(3)
+
+    -- Function to teleport the player to the second target position
+    local function teleportPlayer()
+        if game.Players.LocalPlayer and game.Players.LocalPlayer.Character then
+            local character = game.Players.LocalPlayer.Character
+            if character:FindFirstChild("HumanoidRootPart") then
+                character.HumanoidRootPart.CFrame = secondTargetPosition
+            else
+                warn("HumanoidRootPart not found.")
+            end
+        else
+            warn("LocalPlayer or Character not found.")
+        end
+    end
+
+    -- Function to buy the item
+    local function buyItem()
+        -- Find the item in the shop
+        local itemName = "Boxing Moveset (Require: Max Box Stat) - $0"
+        local itemToBuy = workspace.Ignored.Shop:FindFirstChild(itemName)
+
+        if itemToBuy then
+            -- Click the item's ClickDetector
+            fireclickdetector(itemToBuy.ClickDetector)
+        else
+            warn(itemName .. " not found in the shop.")
+        end
+    end
+
+    -- Main logic
+    teleportPlayer()
+
+    -- Wait for the player to teleport
+    task.wait(2)
+
+    buyItem()
+end
