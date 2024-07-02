@@ -1,5 +1,3 @@
-print("Boxing training script loaded.")
-
 -- Ensure the game is fully loaded
 if not game:IsLoaded() then
     game.Loaded:Wait()
@@ -69,10 +67,17 @@ local function buyItem()
     end
 end
 
--- Main logic
-teleportPlayer()
+-- Main logic for boxing training
+if getgenv().boxtrain == "true" then
+    print("Box train is true. Executing boxing training logic.")
+    -- Teleport player
+    teleportPlayer()
 
--- Wait for the player to teleport
-task.wait(2)
+    -- Wait for the player to teleport
+    task.wait(2)
 
-buyItem()
+    -- Buy the item
+    buyItem()
+else
+    print("Box train is false. Skipping boxing training logic.")
+end
