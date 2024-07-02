@@ -136,3 +136,75 @@ local function controlFPS()
 end
 
 spawn(controlFPS)
+
+local lightning = game:GetService("Lighting")
+
+
+      --lightning.GlobalShadows = false --optional  
+        for i,v in pairs(workspace:GetDescendants()) do
+            if v:IsA("BasePart") then
+                v.Material = Enum.Material.Plastic
+            end
+        end
+        local Model = workspace
+        local ClassTypes = {
+            "Decal",
+            "Texture"
+        }
+    
+        for _, v in ipairs(workspace:GetDescendants()) do
+            if table.find(ClassTypes, v.ClassName) then
+                print(v.ClassName)
+                v:Destroy()
+            end
+        end
+
+-- Put this script inside a LocalScript
+
+local folderPath = {"MAP", "Map"} -- Replace with the path of the folder containing the mesh parts
+local meshNameToRemove = "Meshes/mountain" -- Replace with the name of the mesh parts you want to remove
+
+-- Function to find a folder by path
+local function findFolderByPath(path)
+    local currentFolder = workspace
+
+    for _, folderName in pairs(path) do
+        currentFolder = currentFolder:FindFirstChild(folderName)
+
+        if not currentFolder or not currentFolder:IsA("Folder") then
+            return nil
+        end
+    end
+
+    return currentFolder
+end
+
+-- Function to duplicate all mesh parts within a folder except those with the specified name
+local function duplicateMeshPartsExceptName(folder, name)
+    local duplicateParts = {}
+
+    for _, descendant in pairs(folder:GetDescendants()) do
+        if descendant:IsA("MeshPart") and descendant.Name ~= name then
+            local duplicatePart = descendant:Clone()
+            table.insert(duplicateParts, duplicatePart)
+        end
+    end
+
+    -- Clear the folder
+    folder:ClearAllChildren()
+
+    -- Reparent the duplicated parts back to the folder
+    for _, duplicatePart in pairs(duplicateParts) do
+        duplicatePart.Parent = folder
+    end
+end
+
+-- Get the specified folder by path
+local targetFolder = findFolderByPath(folderPath)
+
+if targetFolder then
+    -- Duplicate all mesh parts within the folder except those with the specified name
+    duplicateMeshPartsExceptName(targetFolder, meshNameToRemove)
+else
+    warn("Folder not found:", table.concat(folderPath, " > "))
+end
