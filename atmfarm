@@ -1,6 +1,130 @@
+-- Assuming this script is a LocalScript in StarterGui
+
+local ScreenGui = Instance.new("ScreenGui")
+local Frame = Instance.new("Frame")
+local TextLabel = Instance.new("TextLabel")
+local Frame_2 = Instance.new("Frame")
+local TimeLabel = Instance.new("TextLabel")  -- New TimeLabel for displaying running time
+local TextLabel_3 = Instance.new("TextLabel")
+local TextLabel_4 = Instance.new("TextLabel")
+
+-- Function to format numbers with commas
+local function formatNumberWithCommas(number)
+    local formatted = tostring(number)
+    while true do
+        formatted, k = string.gsub(formatted, "^(-?%d+)(%d%d%d)", '%1,%2')
+        if k == 0 then
+            break
+        end
+    end
+    return formatted
+end
+
+-- Function to update the running time and currency value
+local player = game.Players.LocalPlayer
+local DataFolder = player:WaitForChild("DataFolder")
+local startCurrency = DataFolder.Currency.Value  -- Record the initial currency value
+local startTime = tick()  -- Record the start time
+
+local function updateRunningTime()
+    local elapsedTime = tick() - startTime
+    local hours = math.floor(elapsedTime / 3600)
+    local minutes = math.floor((elapsedTime % 3600) / 60)
+    local seconds = math.floor(elapsedTime % 60)
+    TimeLabel.Text = string.format("%d:%02d:%02d", hours, minutes, seconds)
+    
+    -- Update the currency value
+    if DataFolder:FindFirstChild("Currency") then
+        local currentCurrency = DataFolder.Currency.Value
+        TextLabel_3.Text = formatNumberWithCommas(currentCurrency)
+        
+        -- Calculate the increase in currency
+        local currencyIncrease = currentCurrency - startCurrency
+        TextLabel_4.Text = "+ " .. formatNumberWithCommas(currencyIncrease)
+    else
+        TextLabel_3.Text = "Currency Not Found"
+        TextLabel_4.Text = ""
+    end
+end
+
+-- Update the time label and currency value every second
+spawn(function()
+    while true do
+        updateRunningTime()
+        wait(1)
+    end
+end)
+
+-- Properties:
+ScreenGui.Parent = game.CoreGui -- Use CoreGui to ensure it persists
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.IgnoreGuiInset = true  -- Ensures the GUI ignores any default inset
+
+Frame.Parent = ScreenGui
+Frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Frame.BorderSizePixel = 0
+Frame.Position = UDim2.new(0, 0, 0, 0)  -- Start at top-left corner
+Frame.Size = UDim2.new(1, 0, 1, 0)  -- Fullscreen size
+
+-- Calculate the position for Frame_2 to be centered under TextLabel
+local textLabelHeight = 50  -- Height of TextLabel
+local textLabelWidth = 1577  -- Width of TextLabel
+local frameHeight = 328  -- Height of Frame_2
+local frameWidth = 373  -- Width of Frame_2
+local frameVerticalOffset = (textLabelHeight / Frame.AbsoluteSize.Y) + ((1 - textLabelHeight / Frame.AbsoluteSize.Y - frameHeight / Frame.AbsoluteSize.Y) / 2)
+local textLabelHorizontalOffset = (1 - textLabelWidth / Frame.AbsoluteSize.X) / 2
+
+TextLabel.Parent = Frame
+TextLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+TextLabel.BackgroundTransparency = 1
+TextLabel.Position = UDim2.new(textLabelHorizontalOffset, 0, 0.08, 0)  -- Centered horizontally and adjusted vertical positioning
+TextLabel.Size = UDim2.new(0, textLabelWidth, 0, textLabelHeight)
+TextLabel.Font = Enum.Font.SourceSansBold
+TextLabel.Text = "Varsity Auto Farm"
+TextLabel.TextColor3 = Color3.fromRGB(252, 252, 252)
+TextLabel.TextSize = 83
+
+Frame_2.Parent = Frame
+Frame_2.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
+Frame_2.BorderSizePixel = 0
+Frame_2.Position = UDim2.new(0.5, -frameWidth/2, frameVerticalOffset, 0)  -- Centered under TextLabel
+Frame_2.Size = UDim2.new(0, frameWidth, 0, frameHeight)
+
+-- New TimeLabel for displaying running time
+TimeLabel.Parent = Frame_2
+TimeLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+TimeLabel.BackgroundTransparency = 1
+TimeLabel.Size = UDim2.new(0, frameWidth, 0, 104)
+TimeLabel.Font = Enum.Font.SourceSansBold
+TimeLabel.TextColor3 = Color3.fromRGB(235, 235, 235)
+TimeLabel.TextSize = 65
+TimeLabel.TextStrokeColor3 = Color3.fromRGB(235, 235, 235)
+
+TextLabel_3.Parent = Frame_2
+TextLabel_3.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+TextLabel_3.BackgroundTransparency = 1
+TextLabel_3.Position = UDim2.new(0, 0, 0.317, 0)
+TextLabel_3.Size = UDim2.new(0, frameWidth, 0, 104)
+TextLabel_3.Font = Enum.Font.SourceSansBold
+TextLabel_3.TextColor3 = Color3.fromRGB(93, 252, 35)
+TextLabel_3.TextSize = 65
+
+TextLabel_4.Parent = Frame_2
+TextLabel_4.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+TextLabel_4.BackgroundTransparency = 1
+TextLabel_4.Position = UDim2.new(0, 0, 0.634, 0)
+TextLabel_4.Size = UDim2.new(0, frameWidth, 0, 104)
+TextLabel_4.Font = Enum.Font.SourceSansBold
+TextLabel_4.TextColor3 = Color3.fromRGB(93, 252, 35)
+TextLabel_4.TextSize = 65
+
+-- Reapply the GUI if the player dies or resets
+player.CharacterAdded:Connect(function(character)
+    ScreenGui.Parent = game.CoreGui
+end)
+
 -- Use existing getgenv().fps if set, otherwise default to 60
 getgenv().fps = getgenv().fps or 60
-print("FPS set to: ", getgenv().fps)
 
 local function controlFPS()
     local RunService = game:GetService("RunService")
@@ -12,35 +136,3 @@ local function controlFPS()
 end
 
 spawn(controlFPS)
-
--- Use existing getgenv().codes if set, otherwise default to internal values
-getgenv().codes = getgenv().codes or {
-    "CODE1",
-    "CODE2"
-}
-print("Codes set to: ", table.concat(getgenv().codes, ", "))
-
--- Redeem promo codes
-local function handleRedeemCommand(code)
-    local args = {
-        [1] = "EnterPromoCode",
-        [2] = code
-    }
-    print("Redeeming code: ", code)  -- Debug print to confirm which code is being redeemed
-    game:GetService("ReplicatedStorage"):WaitForChild("MainEvent"):FireServer(unpack(args))
-end
-
--- If getgenv().codes is set, use those codes; otherwise, use default internal values
-if getgenv().codes then
-    for _, code in ipairs(getgenv().codes) do
-        handleRedeemCommand(code)
-    end
-else
-    -- Default behavior if getgenv().codes is not set
-    for _, code in ipairs({
-        "CODE1",
-        "CODE2"
-    }) do
-        handleRedeemCommand(code)
-    end
-end
