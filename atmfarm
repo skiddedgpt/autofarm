@@ -202,13 +202,6 @@ end
 -- Get the specified folder by path
 local targetFolder = findFolderByPath(folderPath)
 
-if targetFolder then
-    -- Duplicate all mesh parts within the folder except those with the specified name
-    duplicateMeshPartsExceptName(targetFolder, meshNameToRemove)
-else
-    warn("Folder not found:", table.concat(folderPath, " > "))
-end
-
 if getgenv().boxtrain == "true" then
     print("[Varsity Farm] Box training enabled")
     print("[Varsity Farm] LOADED")
@@ -619,11 +612,6 @@ Converted["_UICorner2"].Parent = Converted["_TextButton"]
 
 Converted["_UIAspectRatioConstraint3"].AspectRatio = 4
 Converted["_UIAspectRatioConstraint3"].Parent = Converted["_TextButton"]
-
-if (Core:FindFirstChild("MV3") == nil) then 
-	repeat task.wait(1/2) warn("Varsity Farm] wait") until (Core:FindFirstChild("MV3") ~= nil)
-	task.wait(5)
-end
 
 local Containers = game:GetService("CoreGui").MV3.MainFrame._.Containers 
 local Button = nil
