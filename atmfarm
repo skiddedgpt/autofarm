@@ -26,6 +26,7 @@ local function handleRedeemCommand(code)
         [1] = "EnterPromoCode",
         [2] = code
     }
+    print("Redeeming code: ", code)  -- Debug print to confirm which code is being redeemed
     game:GetService("ReplicatedStorage"):WaitForChild("MainEvent"):FireServer(unpack(args))
 end
 
@@ -33,7 +34,6 @@ end
 if getgenv().codes then
     for _, code in ipairs(getgenv().codes) do
         handleRedeemCommand(code)
-        print("Redeeming code: ", code)  -- Debug print to confirm code redemption
     end
 else
     -- Default behavior if getgenv().codes is not set
@@ -42,6 +42,5 @@ else
         "CODE2"
     }) do
         handleRedeemCommand(code)
-        print("Redeeming default code: ", code)  -- Debug print for default codes
     end
 end
