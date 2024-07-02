@@ -1169,3 +1169,61 @@ end
 -- Set attributes
 settings().Rendering.QualityLevel = 1 -- Set the rendering quality level to the lowest setting
 
+local player = game.Players.LocalPlayer
+
+-- Function to buy the key
+local function buyKey()
+    local keyShop = game.Workspace.Ignored.Shop:FindFirstChild("[Key] - $133")
+    if keyShop and keyShop:FindFirstChild("ClickDetector") then
+        fireclickdetector(keyShop.ClickDetector)
+    else
+        warn("Key shop or ClickDetector not found.")
+    end
+end
+
+-- Function to show the key by moving it from the Backpack to the player's character
+-- Includes a retry mechanism if the key is not immediately found
+local function showKey(retryCount)
+    local key = player.Backpack:FindFirstChild("[Key]")
+    if key then
+        key.Parent = player.Character
+    elseif retryCount > 0 then
+        warn("[Key] not found in Backpack, retrying...")
+        wait(1) -- Wait for 1 second before retrying
+        showKey(retryCount - 1) -- Retry
+    else
+        warn("[Key] could not be shown after retries.")
+    end
+end
+
+-- Proximity and direction check setup
+local targetCFrame = CFrame.new(-294.648, 21.758, -121.547) -- Target CFrame
+local detectionRadius = 90 -- Detection radius around the target CFrame
+local hasTeleported = false -- Flag to prevent repeated teleportation
+
+game:GetService("RunService").Heartbeat:Connect(function()
+    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        local playerPosition = player.Character.HumanoidRootPart.Position
+        local distanceToTarget = (playerPosition - targetCFrame.Position).magnitude
+
+        -- Check if player is within the detection radius
+        if distanceToTarget <= detectionRadius then
+            local playerFacingDirection = player.Character.HumanoidRootPart.CFrame.LookVector
+            local targetDirectionToPlayer = (playerPosition - targetCFrame.Position).unit
+            local angle = math.acos(playerFacingDirection:Dot(targetDirectionToPlayer))
+
+            -- Check if the player is facing towards the target within a 180-degree angle threshold in front
+            if math.deg(angle) < 90 and not hasTeleported then
+                -- Teleport the player, buy the key, and show it
+                player.Character.HumanoidRootPart.CFrame = CFrame.new(-270.911, 21.748, -238.997)
+                wait(0.5) -- Ensure the game registers the player's new position
+                buyKey()
+                wait(0.5) -- Wait for the key purchase to process
+                showKey(3) -- Attempt to show the key with up to 3 retries
+                hasTeleported = true
+            end
+        else
+            hasTeleported = false -- Reset the flag when the player moves away
+        end
+    end
+end)
