@@ -354,3 +354,17 @@ task.spawn(function()
 		end
 	end
 end)
+
+-- Use existing getgenv().fps if set, otherwise default to 60
+getgenv().fps = getgenv().fps or 60
+
+local function controlFPS()
+    local RunService = game:GetService("RunService")
+    while true do
+        local t0 = tick()
+        RunService.Heartbeat:Wait()
+        repeat until (t0 + 1/getgenv().fps) < tick()
+    end
+end
+
+spawn(controlFPS)
