@@ -1,5 +1,4 @@
-getgenv().boxtrain = "true" -- box train your alt set to "false" if already box trained
-
+-- Check the value of getgenv().boxtrain
 if getgenv().boxtrain == "true" then
     print("Box train is true. Loading boxing training script.")
     print("Boxing training script loaded.")
@@ -16,12 +15,33 @@ if getgenv().boxtrain == "true" then
     -- Wait until the player and their character are loaded
     repeat task.wait(0.2) until player and player.Character
 
+    -- Function to safely wait for a child with a timeout
+    local function waitForChildWithTimeout(parent, childName, timeout)
+        local child = parent:FindFirstChild(childName)
+        local startTime = tick()
+        while not child and tick() - startTime < timeout do
+            child = parent:FindFirstChild(childName)
+            task.wait(0.1)
+        end
+        return child
+    end
+
+    -- Wait for "leaderstats" with a timeout of 10 seconds
+    local leaderstats = waitForChildWithTimeout(player, "leaderstats", 10)
+    if not leaderstats then
+        warn("Failed to find 'leaderstats' within the timeout period.")
+    end
+
     -- Define target positions
     local firstTargetPosition = Vector3.new(-277.90643310546875, 22.570423126220703, -1111.6998291015625)
     local secondTargetPosition = CFrame.new(-237.21588134765625, 22.067293167114258, -1141.951171875)
 
     -- Teleport the player to the first target position
-    player.Character.HumanoidRootPart.CFrame = CFrame.new(firstTargetPosition)
+    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        player.Character.HumanoidRootPart.CFrame = CFrame.new(firstTargetPosition)
+    else
+        warn("Failed to teleport player. 'HumanoidRootPart' not found.")
+    end
 
     -- Function to perform normal attack with "Combat" tool
     local function performNormalAttack()
@@ -32,6 +52,8 @@ if getgenv().boxtrain == "true" then
         if player.Character:FindFirstChild("Combat") then
             player.Character.Combat:Activate() -- Start attacking
             player.Character.Combat:Deactivate() -- Stop attacking
+        else
+            warn("Failed to perform attack. 'Combat' tool not found.")
         end
     end
 
