@@ -1,5 +1,3 @@
-getgenv().boxtrain = "true" -- box train your alt set to false if already box trained
-
 if getgenv().boxtrain == "true" then
     print("Box train is true. Loading boxing training script.")
     print("Boxing training script loaded.")
@@ -71,16 +69,4 @@ local function buyItem()
     else
         warn(itemName .. " not found in the shop.")
     end
-end
-
--- Main logic
-teleportPlayer()
-
--- Wait for the player to teleport
-task.wait(2)
-
-buyItem()
-
-else
-    print("Box train is false. Skipping boxing training script.")
 end
