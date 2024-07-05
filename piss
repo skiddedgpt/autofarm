@@ -1,3 +1,111 @@
+-- Get the LocalPlayer and their Character
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+
+-- Teleport the character to specified coordinates
+character:SetPrimaryPartCFrame(CFrame.new(Vector3.new(420.3534240722656, 48.02681350708008, 39.21576690673828)))
+
+-- Wait a moment for the teleport to complete (adjust as needed)
+wait(1)
+
+-- Script to delete objects and create baseplates
+local oilBarrelName = "oil barrel" -- Name of the oil barrel objects you want to remove
+local partNameToRemove = "Part" -- Name of the parts you want to remove
+local objectNames = {
+    "Block",
+    "Object4",
+    "Object5",
+    "Object6",
+    "Object7",
+    "Object8",
+    "Object9",
+    "Object10"
+} -- Names of the objects you want to remove
+local gateNameToRemove = "Gate" -- Name of the gate objects you want to remove
+local doorNameToRemove = "Door" -- Name of the door objects you want to remove
+local modelNameToRemove = "Model" -- Name of the model objects you want to remove
+local cinderBlockName = "cinder block" -- Name of the cinder block objects you want to remove
+local additionalObjectNames = {
+    "PluginGrass",
+    "Meshes/mountain",
+    "window",
+    "big window",
+    "concrete barrier",
+    "wooden fence",
+    "Apartment",
+    "Sewer Light",
+    "Trash",
+    "Wedge"
+} -- Additional names of objects you want to remove
+local cashiersFolderName = "Cashiers" -- Name of the Cashiers folder
+local baseplateSize = Vector3.new(25, 1, 25) -- Size of the baseplate, increased for better coverage
+local baseplateOffset = 5 -- Offset in studs to move the baseplate further underneath (adjust as needed)
+
+-- Function to delete all objects with the specified name within the workspace
+local function deleteAllObjectsByName(name)
+    local found = false
+    for _, descendant in pairs(workspace:GetDescendants()) do
+        if descendant.Name == name then
+            print("Found object to delete: " .. descendant.Name)
+            descendant:Destroy()
+            found = true
+        end
+    end
+    if not found then
+        print("No object named " .. name .. " found in the workspace.")
+    end
+end
+
+-- Function to create a larger baseplate under the specified CA$HIER object
+local function createBaseplateUnderObject(object)
+    local baseplate = Instance.new("Part")
+    baseplate.Size = baseplateSize
+    baseplate.Anchored = true
+    baseplate.Name = "Baseplate"
+
+    -- Ensure we have a valid position
+    local referencePart = object:FindFirstChildWhichIsA("BasePart") or object.PrimaryPart
+    if referencePart then
+        baseplate.Position = referencePart.Position - Vector3.new(0, referencePart.Size.Y / 2 + baseplate.Size.Y / 2 + baseplateOffset, 0)
+        baseplate.Parent = workspace -- Place the baseplate directly in the workspace
+        print("Baseplate created under object: " .. object.Name)
+    else
+        print("No valid reference part found for object: " .. object.Name)
+        baseplate:Destroy()
+    end
+end
+
+-- Delete all specified objects within the workspace
+deleteAllObjectsByName(oilBarrelName)
+deleteAllObjectsByName(partNameToRemove)
+for _, objectName in ipairs(objectNames) do
+    deleteAllObjectsByName(objectName)
+end
+deleteAllObjectsByName(gateNameToRemove)
+deleteAllObjectsByName(doorNameToRemove)
+deleteAllObjectsByName(modelNameToRemove)
+deleteAllObjectsByName(cinderBlockName)
+
+-- Delete additional specified objects
+for _, additionalObjectName in ipairs(additionalObjectNames) do
+    deleteAllObjectsByName(additionalObjectName)
+end
+
+-- Create a larger baseplate under each CA$HIER object in the Cashiers folder
+local cashiersFolder = workspace:FindFirstChild(cashiersFolderName)
+if cashiersFolder and cashiersFolder:IsA("Folder") then
+    for _, child in pairs(cashiersFolder:GetChildren()) do
+        if child.Name == "CA$HIER" and child:IsA("Model") then
+            createBaseplateUnderObject(child)
+        end
+    end
+else
+    warn("Folder not found or is not a Folder:", cashiersFolderName)
+end
+
+
+
+
 -- Check the value of getgenv().boxtrain
 if getgenv().boxtrain == "true" then
     print("Box train is true. Loading boxing training script.")
