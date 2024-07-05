@@ -9,7 +9,7 @@ local character = player.Character or player.CharacterAdded:Wait()
 character:SetPrimaryPartCFrame(CFrame.new(Vector3.new(420.3534240722656, 48.02681350708008, 39.21576690673828)))
 
 -- Wait a moment for the teleport to complete (adjust as needed)
-wait(1)
+wait(5)
 
 -- Script to delete objects and create baseplates
 local oilBarrelName = "oil barrel" -- Name of the oil barrel objects you want to remove
