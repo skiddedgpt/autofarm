@@ -1,113 +1,3 @@
--- Get the LocalPlayer and their Character
-local player = game.Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-
--- Teleport the character to specified coordinates
-character:SetPrimaryPartCFrame(CFrame.new(Vector3.new(420.3534240722656, 48.02681350708008, 39.21576690673828)))
-
--- Wait a moment for the teleport to complete (adjust as needed)
-wait(1)
-
--- Script to delete objects and create baseplates
-local oilBarrelName = "oil barrel" -- Name of the oil barrel objects you want to remove
-local partNameToRemove = "Part" -- Name of the parts you want to remove
-local objectNames = {
-    "Block",
-    "Object4",
-    "Object5",
-    "Object6",
-    "Object7",
-    "Object8",
-    "Object9",
-    "Object10"
-} -- Names of the objects you want to remove
-local gateNameToRemove = "Gate" -- Name of the gate objects you want to remove
-local doorNameToRemove = "Door" -- Name of the door objects you want to remove
-local modelNameToRemove = "Model" -- Name of the model objects you want to remove
-local cinderBlockName = "cinder block" -- Name of the cinder block objects you want to remove
-local additionalObjectNames = {
-    "PluginGrass",
-    "Meshes/mountain",
-    "window",
-    "big window",
-    "concrete barrier",
-    "wooden fence",
-    "Apartment",
-    "Sewer Light",
-    "Trash",
-    "Wedge"
-} -- Additional names of objects you want to remove
-local cashiersFolderName = "Cashiers" -- Name of the Cashiers folder
-local baseplateSize = Vector3.new(25, 1, 25) -- Size of the baseplate, increased for better coverage
-local baseplateOffset = 5 -- Offset in studs to move the baseplate further underneath (adjust as needed)
-
--- Function to delete all objects with the specified name within the workspace
-local function deleteAllObjectsByName(name)
-    local found = false
-    for _, descendant in pairs(workspace:GetDescendants()) do
-        if descendant.Name == name then
-            print("Found object to delete: " .. descendant.Name)
-            descendant:Destroy()
-            found = true
-        end
-    end
-    if not found then
-        print("No object named " .. name .. " found in the workspace.")
-    end
-end
-
--- Function to create a larger baseplate under the specified CA$HIER object
-local function createBaseplateUnderObject(object)
-    local baseplate = Instance.new("Part")
-    baseplate.Size = baseplateSize
-    baseplate.Anchored = true
-    baseplate.Name = "Baseplate"
-
-    -- Ensure we have a valid position
-    local referencePart = object:FindFirstChildWhichIsA("BasePart") or object.PrimaryPart
-    if referencePart then
-        baseplate.Position = referencePart.Position - Vector3.new(0, referencePart.Size.Y / 2 + baseplate.Size.Y / 2 + baseplateOffset, 0)
-        baseplate.Parent = workspace -- Place the baseplate directly in the workspace
-        print("Baseplate created under object: " .. object.Name)
-    else
-        print("No valid reference part found for object: " .. object.Name)
-        baseplate:Destroy()
-    end
-end
-
--- Delete all specified objects within the workspace
-deleteAllObjectsByName(oilBarrelName)
-deleteAllObjectsByName(partNameToRemove)
-for _, objectName in ipairs(objectNames) do
-    deleteAllObjectsByName(objectName)
-end
-deleteAllObjectsByName(gateNameToRemove)
-deleteAllObjectsByName(doorNameToRemove)
-deleteAllObjectsByName(modelNameToRemove)
-deleteAllObjectsByName(cinderBlockName)
-
--- Delete additional specified objects
-for _, additionalObjectName in ipairs(additionalObjectNames) do
-    deleteAllObjectsByName(additionalObjectName)
-end
-
--- Create a larger baseplate under each CA$HIER object in the Cashiers folder
-local cashiersFolder = workspace:FindFirstChild(cashiersFolderName)
-if cashiersFolder and cashiersFolder:IsA("Folder") then
-    for _, child in pairs(cashiersFolder:GetChildren()) do
-        if child.Name == "CA$HIER" and child:IsA("Model") then
-            createBaseplateUnderObject(child)
-        end
-    end
-else
-    warn("Folder not found or is not a Folder:", cashiersFolderName)
-end
-
-
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
--- box train
-
 -- Check the value of getgenv().boxtrain
 if getgenv().boxtrain == "true" then
     print("Box train is true. Loading boxing training script.")
@@ -214,25 +104,91 @@ else
     print("Box train is false. Script will not run.")
 end
 
--- Main logic
-teleportPlayer()
 
--- Wait for the player to teleport
-task.wait(2)
+-- Put this script inside a LocalScript
 
-buyItem()
+local oilBarrelName = "oil barrel" -- Name of the oil barrel objects you want to remove
+local partNameToRemove = "Part" -- Name of the parts you want to remove
+local objectName3 = "Block" -- Name of the third object you want to remove
+local objectName4 = "Object4" -- Replace with the name of the fourth object you want to remove
+local objectName5 = "Object5" -- Replace with the name of the fifth object you want to remove
+local objectName6 = "Object6" -- Replace with the name of the sixth object you want to remove
+local objectName7 = "Object7" -- Replace with the name of the seventh object you want to remove
+local objectName8 = "Object8" -- Replace with the name of the eighth object you want to remove
+local objectName9 = "Object9" -- Replace with the name of the ninth object you want to remove
+local objectName10 = "Object10" -- Replace with the name of the tenth object you want to remove
+local gateNameToRemove = "Gate" -- Name of the gate objects you want to remove
+local doorNameToRemove = "Door" -- Name of the door objects you want to remove
+local modelNameToRemove = "Model" -- Name of the model objects you want to remove
+local cinderBlockName = "cinder block" -- Name of the cinder block objects you want to remove
+local cashiersFolderName = "Cashiers" -- Name of the Cashiers folder
+local baseplateSize = Vector3.new(15, 1, 15) -- Size of the baseplate, increased for better coverage
 
-else
-    print("Box train is false. Skipping boxing training script.")
+-- Function to delete all objects with the specified name within the workspace
+local function deleteAllObjectsByName(name)
+    local found = false
+    for _, descendant in pairs(workspace:GetDescendants()) do
+        if descendant.Name == name then
+            print("Found object to delete: " .. descendant.Name)
+            descendant:Destroy()
+            found = true
+        end
+    end
+    if not found then
+        print("No object named " .. name .. " found in the workspace.")
+    end
 end
 
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Function to create a small baseplate under the specified CA$HIER object
+local function createBaseplateUnderObject(object)
+    local baseplate = Instance.new("Part")
+    baseplate.Size = baseplateSize
+    baseplate.Anchored = true
+    baseplate.Name = "Baseplate"
+
+    -- Ensure we have a valid position
+    local referencePart = object:FindFirstChildWhichIsA("BasePart") or object.PrimaryPart
+    if referencePart then
+        baseplate.Position = referencePart.Position - Vector3.new(0, referencePart.Size.Y / 2 + baseplate.Size.Y + 1, 0)
+        baseplate.Parent = workspace -- Place the baseplate directly in the workspace
+        print("Baseplate created under object: " .. object.Name)
+    else
+        print("No valid reference part found for object: " .. object.Name)
+        baseplate:Destroy()
+    end
+end
+
+-- Delete all specified objects within the workspace
+deleteAllObjectsByName(oilBarrelName)
+deleteAllObjectsByName(partNameToRemove)
+deleteAllObjectsByName(objectName3)
+deleteAllObjectsByName(objectName4)
+deleteAllObjectsByName(objectName5)
+deleteAllObjectsByName(objectName6)
+deleteAllObjectsByName(objectName7)
+deleteAllObjectsByName(objectName8)
+deleteAllObjectsByName(objectName9)
+deleteAllObjectsByName(objectName10)
+deleteAllObjectsByName(gateNameToRemove)
+deleteAllObjectsByName(doorNameToRemove)
+deleteAllObjectsByName(modelNameToRemove)
+deleteAllObjectsByName(cinderBlockName)
+
+-- Create a small baseplate under each CA$HIER object in the Cashiers folder
+local cashiersFolder = workspace:FindFirstChild(cashiersFolderName)
+if cashiersFolder and cashiersFolder:IsA("Folder") then
+    for _, child in pairs(cashiersFolder:GetChildren()) do
+        if child.Name == "CA$HIER" and child:IsA("Model") then
+            createBaseplateUnderObject(child)
+        end
+    end
+else
+    warn("Folder not found or is not a Folder:", cashiersFolderName)
+end
 
 game:GetService("RunService"):Set3dRenderingEnabled(false)
 pcall(function() UserSettings().GameSettings.MasterVolume = 0 end)
 pcall(function() settings().Rendering.QualityLevel = "Level01" end)
-
------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 getgenv().Enabled = true
 getgenv().Dis = function()
@@ -377,26 +333,6 @@ task.spawn(function()
 	end
 end)
 
------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
--- Use existing getgenv().fps if set, otherwise default to 60
-getgenv().fps = getgenv().fps or 60
-
-local function controlFPS()
-    local RunService = game:GetService("RunService")
-    while true do
-        local t0 = tick()
-        RunService.Heartbeat:Wait()
-        repeat until (t0 + 1/getgenv().fps) < tick()
-    end
-end
-
-spawn(controlFPS)
-
------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
--- Assuming this script is a LocalScript in StarterGui
-
 local ScreenGui = Instance.new("ScreenGui")
 local Frame = Instance.new("Frame")
 local TextLabel = Instance.new("TextLabel")
@@ -519,3 +455,4 @@ TextLabel_4.TextSize = 65
 player.CharacterAdded:Connect(function(character)
     ScreenGui.Parent = game.CoreGui
 end)
+
