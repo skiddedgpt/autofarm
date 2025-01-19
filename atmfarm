@@ -12,6 +12,9 @@ getgenv().alts = {
     Alt3 = "hifortnitekids2" -- Replace with the third alt username
 }
 
+-- Persistent table to track ongoing trades
+local ongoingTrades = {}
+
 -- Function to wait for a player with an indefinite wait
 local function waitForPlayer(playerName)
     while true do
@@ -35,8 +38,13 @@ local function getActiveAlts()
     return activeAlts
 end
 
--- Function to perform trading
+-- Function to resume or perform trading
 local function performTrade(recipientUsername, totalTools)
+    -- Save or load trade state
+    local tradeState = ongoingTrades[recipientUsername] or {remainingTools = totalTools}
+    tradeState.totalTools = totalTools
+    ongoingTrades[recipientUsername] = tradeState
+
     -- Wait for the recipient player to join, even if they join later
     local recipient = waitForPlayer(recipientUsername)
 
@@ -53,22 +61,21 @@ local function performTrade(recipientUsername, totalTools)
     end
 
     -- Calculate tools per alt
-    local toolsPerAlt = math.floor(totalTools / numAlts)
-    local extraTools = totalTools % numAlts
+    local toolsPerAlt = math.floor(tradeState.remainingTools / numAlts)
+    local extraTools = tradeState.remainingTools % numAlts
 
-    print("Total tools: " .. totalTools)
+    print("Total tools: " .. tradeState.totalTools)
     print("Active alts: " .. numAlts)
     print("Tools per alt: " .. toolsPerAlt)
     print("Extra tools to distribute: " .. extraTools)
 
     -- Trade tools from each alt
-    local remainingTools = totalTools
     for index, altPlayer in ipairs(activeAlts) do
         local backpack = altPlayer:FindFirstChild("Backpack")
         local tools = {}
         if backpack then
             for _, item in pairs(backpack:GetChildren()) do
-                if item:IsA("Tool") then
+                if item:IsA("Tool") and item.Name ~= "Treasure Map" then -- Skip "Treasure Map"
                     table.insert(tools, item)
                 end
             end
@@ -83,7 +90,7 @@ local function performTrade(recipientUsername, totalTools)
         end
 
         print(altPlayer.Name .. " is set to trade " .. toolsToOffer .. " tools.")
-        while toolsToOffer > 0 and remainingTools > 0 do
+        while toolsToOffer > 0 and tradeState.remainingTools > 0 do
             local tool = table.remove(tools, 1) -- Take the first tool available
             if tool and altPlayer.Character and altPlayer.Character:FindFirstChild("Humanoid") then
                 altPlayer.Character.Humanoid:EquipTool(tool)
@@ -93,17 +100,17 @@ local function performTrade(recipientUsername, totalTools)
                     local args = {recipient}
                     offerEvent:FireServer(unpack(args))
                     toolsToOffer = toolsToOffer - 1
-                    remainingTools = remainingTools - 1
+                    tradeState.remainingTools = tradeState.remainingTools - 1
                     print("Offered tool: " .. tool.Name)
                 else
                     print("Failed to offer " .. tool.Name .. ". Trying a different tool.")
                     table.insert(tools, tool) -- Reinsert the tool for retry
                 end
             end
-            -- If no tools are left, refresh the tool list from the backpack
-            if #tools == 0 and altPlayer:FindFirstChild("Backpack") then
-                for _, item in pairs(altPlayer.Backpack:GetChildren()) do
-                    if item:IsA("Tool") and not table.find(tools, item) then
+            -- Refresh tool list if empty
+            if #tools == 0 and backpack then
+                for _, item in pairs(backpack:GetChildren()) do
+                    if item:IsA("Tool") and item.Name ~= "Treasure Map" and not table.find(tools, item) then
                         table.insert(tools, item)
                     end
                 end
@@ -120,10 +127,11 @@ local function performTrade(recipientUsername, totalTools)
     end
 
     -- Final check for any unoffered tools
-    if remainingTools > 0 then
-        print("Not all tools could be traded. Remaining: " .. remainingTools)
+    if tradeState.remainingTools > 0 then
+        print("Not all tools could be traded. Remaining: " .. tradeState.remainingTools)
     else
-        print("Trade successful. All " .. totalTools .. " tools have been offered.")
+        print("Trade successful. All " .. tradeState.totalTools .. " tools have been offered.")
+        ongoingTrades[recipientUsername] = nil -- Clear trade state on completion
     end
 end
 
@@ -131,9 +139,8 @@ end
 local function handleCommand(command)
     if command:lower() == ".setup" then
         print("Setup command executed.")
-        -- Setup logic if needed
     else
-        -- Match the .tradeall command with arguments, allowing underscores in usernames
+        -- Match the .tradeall command with arguments
         local recipientUsername, amountOfTools = command:match("^%.tradeall%s+([%w_]+)%s+(%d+)$")
         amountOfTools = tonumber(amountOfTools)
         if recipientUsername and amountOfTools then
@@ -158,6 +165,7 @@ if ws then
 else
     print("Failed to connect to WebSocket.")
 end
+
 
 -- Ensure the script runs properly when executed
 local worldFolder = workspace:FindFirstChild("world")
