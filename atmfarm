@@ -143,7 +143,7 @@ local function handleCommand(command)
 end
 
 -- WebSocket connection
-local ws = WebSocket.connect("ws://192.168.1.17:8765")
+local ws = WebSocket.connect("ws://192.168.1.18:8765")
 if ws then
     print("Connected to WebSocket!")
     ws.OnMessage:Connect(function(msg)
