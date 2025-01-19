@@ -1,825 +1,191 @@
--- Assuming this script is a LocalScript in StarterGui
-
-local ScreenGui = Instance.new("ScreenGui")
-local Frame = Instance.new("Frame")
-local TextLabel = Instance.new("TextLabel")
-local Frame_2 = Instance.new("Frame")
-local TimeLabel = Instance.new("TextLabel")  -- New TimeLabel for displaying running time
-local TextLabel_3 = Instance.new("TextLabel")
-local TextLabel_4 = Instance.new("TextLabel")
-
--- Function to format numbers with commas
-local function formatNumberWithCommas(number)
-    local formatted = tostring(number)
-    while true do
-        formatted, k = string.gsub(formatted, "^(-?%d+)(%d%d%d)", '%1,%2')
-        if k == 0 then
-            break
-        end
-    end
-    return formatted
-end
-
--- Function to update the running time and currency value
-local player = game.Players.LocalPlayer
-local DataFolder = player:WaitForChild("DataFolder")
-local startCurrency = DataFolder.Currency.Value  -- Record the initial currency value
-local startTime = tick()  -- Record the start time
-
-local function updateRunningTime()
-    local elapsedTime = tick() - startTime
-    local hours = math.floor(elapsedTime / 3600)
-    local minutes = math.floor((elapsedTime % 3600) / 60)
-    local seconds = math.floor(elapsedTime % 60)
-    TimeLabel.Text = string.format("%d:%02d:%02d", hours, minutes, seconds)
-    
-    -- Update the currency value
-    if DataFolder:FindFirstChild("Currency") then
-        local currentCurrency = DataFolder.Currency.Value
-        TextLabel_3.Text = formatNumberWithCommas(currentCurrency)
-        
-        -- Calculate the increase in currency
-        local currencyIncrease = currentCurrency - startCurrency
-        TextLabel_4.Text = "+ " .. formatNumberWithCommas(currencyIncrease)
-    else
-        TextLabel_3.Text = "Currency Not Found"
-        TextLabel_4.Text = ""
-    end
-end
-
--- Update the time label and currency value every second
-spawn(function()
-    while true do
-        updateRunningTime()
-        wait(1)
-    end
-end)
-
--- Properties:
-ScreenGui.Parent = game.CoreGui -- Use CoreGui to ensure it persists
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-ScreenGui.IgnoreGuiInset = true  -- Ensures the GUI ignores any default inset
-
-Frame.Parent = ScreenGui
-Frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-Frame.BorderSizePixel = 0
-Frame.Position = UDim2.new(0, 0, 0, 0)  -- Start at top-left corner
-Frame.Size = UDim2.new(1, 0, 1, 0)  -- Fullscreen size
-
--- Calculate the position for Frame_2 to be centered under TextLabel
-local textLabelHeight = 50  -- Height of TextLabel
-local textLabelWidth = 1577  -- Width of TextLabel
-local frameHeight = 328  -- Height of Frame_2
-local frameWidth = 373  -- Width of Frame_2
-local frameVerticalOffset = (textLabelHeight / Frame.AbsoluteSize.Y) + ((1 - textLabelHeight / Frame.AbsoluteSize.Y - frameHeight / Frame.AbsoluteSize.Y) / 2)
-local textLabelHorizontalOffset = (1 - textLabelWidth / Frame.AbsoluteSize.X) / 2
-
-TextLabel.Parent = Frame
-TextLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-TextLabel.BackgroundTransparency = 1
-TextLabel.Position = UDim2.new(textLabelHorizontalOffset, 0, 0.08, 0)  -- Centered horizontally and adjusted vertical positioning
-TextLabel.Size = UDim2.new(0, textLabelWidth, 0, textLabelHeight)
-TextLabel.Font = Enum.Font.SourceSansBold
-TextLabel.Text = "Varsity Auto Farm"
-TextLabel.TextColor3 = Color3.fromRGB(252, 252, 252)
-TextLabel.TextSize = 83
-
-Frame_2.Parent = Frame
-Frame_2.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
-Frame_2.BorderSizePixel = 0
-Frame_2.Position = UDim2.new(0.5, -frameWidth/2, frameVerticalOffset, 0)  -- Centered under TextLabel
-Frame_2.Size = UDim2.new(0, frameWidth, 0, frameHeight)
-
--- New TimeLabel for displaying running time
-TimeLabel.Parent = Frame_2
-TimeLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-TimeLabel.BackgroundTransparency = 1
-TimeLabel.Size = UDim2.new(0, frameWidth, 0, 104)
-TimeLabel.Font = Enum.Font.SourceSansBold
-TimeLabel.TextColor3 = Color3.fromRGB(235, 235, 235)
-TimeLabel.TextSize = 65
-TimeLabel.TextStrokeColor3 = Color3.fromRGB(235, 235, 235)
-
-TextLabel_3.Parent = Frame_2
-TextLabel_3.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-TextLabel_3.BackgroundTransparency = 1
-TextLabel_3.Position = UDim2.new(0, 0, 0.317, 0)
-TextLabel_3.Size = UDim2.new(0, frameWidth, 0, 104)
-TextLabel_3.Font = Enum.Font.SourceSansBold
-TextLabel_3.TextColor3 = Color3.fromRGB(93, 252, 35)
-TextLabel_3.TextSize = 65
-
-TextLabel_4.Parent = Frame_2
-TextLabel_4.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-TextLabel_4.BackgroundTransparency = 1
-TextLabel_4.Position = UDim2.new(0, 0, 0.634, 0)
-TextLabel_4.Size = UDim2.new(0, frameWidth, 0, 104)
-TextLabel_4.Font = Enum.Font.SourceSansBold
-TextLabel_4.TextColor3 = Color3.fromRGB(93, 252, 35)
-TextLabel_4.TextSize = 65
-
--- Reapply the GUI if the player dies or resets
-player.CharacterAdded:Connect(function(character)
-    ScreenGui.Parent = game.CoreGui
-end)
-
--- Use existing getgenv().fps if set, otherwise default to 60
-getgenv().fps = getgenv().fps or 60
-
-local function controlFPS()
-    local RunService = game:GetService("RunService")
-    while true do
-        local t0 = tick()
-        RunService.Heartbeat:Wait()
-        repeat until (t0 + 1/getgenv().fps) < tick()
-    end
-end
-
-spawn(controlFPS)
-
-local lightning = game:GetService("Lighting")
-
-
-      --lightning.GlobalShadows = false --optional  
-        for i,v in pairs(workspace:GetDescendants()) do
-            if v:IsA("BasePart") then
-                v.Material = Enum.Material.Plastic
-            end
-        end
-        local Model = workspace
-        local ClassTypes = {
-            "Decal",
-            "Texture"
-        }
-    
-        for _, v in ipairs(workspace:GetDescendants()) do
-            if table.find(ClassTypes, v.ClassName) then
-                print(v.ClassName)
-                v:Destroy()
-            end
-        end
-
--- Put this script inside a LocalScript
-
-local folderPath = {"MAP", "Map"} -- Replace with the path of the folder containing the mesh parts
-local meshNameToRemove = "Meshes/mountain" -- Replace with the name of the mesh parts you want to remove
-
--- Function to find a folder by path
-local function findFolderByPath(path)
-    local currentFolder = workspace
-
-    for _, folderName in pairs(path) do
-        currentFolder = currentFolder:FindFirstChild(folderName)
-
-        if not currentFolder or not currentFolder:IsA("Folder") then
-            return nil
-        end
-    end
-
-    return currentFolder
-end
-
--- Function to duplicate all mesh parts within a folder except those with the specified name
-local function duplicateMeshPartsExceptName(folder, name)
-    local duplicateParts = {}
-
-    for _, descendant in pairs(folder:GetDescendants()) do
-        if descendant:IsA("MeshPart") and descendant.Name ~= name then
-            local duplicatePart = descendant:Clone()
-            table.insert(duplicateParts, duplicatePart)
-        end
-    end
-
-    -- Clear the folder
-    folder:ClearAllChildren()
-
-    -- Reparent the duplicated parts back to the folder
-    for _, duplicatePart in pairs(duplicateParts) do
-        duplicatePart.Parent = folder
-    end
-end
-
--- Get the specified folder by path
-local targetFolder = findFolderByPath(folderPath)
-
-if targetFolder then
-    -- Duplicate all mesh parts within the folder except those with the specified name
-    duplicateMeshPartsExceptName(targetFolder, meshNameToRemove)
-else
-    warn("Folder not found:", table.concat(folderPath, " > "))
-end
-
-if getgenv().boxtrain == "true" then
-    print("Box train is true. Loading boxing training script.")
-    print("Boxing training script loaded.")
-
--- Ensure the game is fully loaded
-if not game:IsLoaded() then
-    game.Loaded:Wait()
-    task.wait(2)
-end
-
--- Get the local player
-local player = game:GetService("Players").LocalPlayer
-
--- Wait until the player and their character are loaded
-repeat task.wait(0.2) until player and player.Character
-
--- Define target positions
-local firstTargetPosition = Vector3.new(-277.90643310546875, 22.570423126220703, -1111.6998291015625)
-local secondTargetPosition = CFrame.new(-237.21588134765625, 22.067293167114258, -1141.951171875)
-
--- Teleport the player to the first target position
-player.Character.HumanoidRootPart.CFrame = CFrame.new(firstTargetPosition)
-
--- Function to perform normal attack with "Combat" tool
-local function performNormalAttack()
-    if player.Backpack:FindFirstChild("Combat") then
-        player.Backpack.Combat.Parent = player.Character -- Move tool to character
-    end
-
-    if player.Character:FindFirstChild("Combat") then
-        player.Character.Combat:Activate() -- Start attacking
-        player.Character.Combat:Deactivate() -- Stop attacking
-    end
-end
-
--- Perform normal attack for 5 minutes
-local endTime = os.time() + 300 -- 300 seconds = 5 minutes
-repeat
-    performNormalAttack()
-    task.wait(0.5) -- Adjust interval between attacks as needed
-until os.time() >= endTime
-
--- Wait for 3 seconds after attacking
-task.wait(3)
-
--- Function to teleport the player to the second target position
-local function teleportPlayer()
-    if game.Players.LocalPlayer and game.Players.LocalPlayer.Character then
-        local character = game.Players.LocalPlayer.Character
-        if character:FindFirstChild("HumanoidRootPart") then
-            character.HumanoidRootPart.CFrame = secondTargetPosition
-        else
-            warn("HumanoidRootPart not found.")
-        end
-    else
-        warn("LocalPlayer or Character not found.")
-    end
-end
-
--- Function to buy the item
-local function buyItem()
-    -- Find the item in the shop
-    local itemName = "Boxing Moveset (Require: Max Box Stat) - $0"
-    local itemToBuy = workspace.Ignored.Shop:FindFirstChild(itemName)
-
-    if itemToBuy then
-        -- Click the item's ClickDetector
-        fireclickdetector(itemToBuy.ClickDetector)
-    else
-        warn(itemName .. " not found in the shop.")
-    end
-end
-
--- Main logic
-teleportPlayer()
-
--- Wait for the player to teleport
-task.wait(2)
-
-buyItem()
-
-else
-    print("Box train is false. Skipping boxing training script.")
-end
-
-getgenv().Enabled = true
-getgenv().Dis = function()
-	Enabled = false
-
-	for i,v in pairs(workspace:GetDescendants()) do 
-		if (v:IsA("Seat")) or (v:IsA("VehicleSeat")) then 
-			v.Disabled = true
-		end
-	end
-end
-
-if (not game:IsLoaded()) then 
-	game.Loaded:Wait()
-	task.wait(2)
-end
-
-repeat task.wait(0.2) until (game:GetService("Players").LocalPlayer) and (game:GetService("Players").LocalPlayer.Character)
-
-local Players = game:GetService("Players")
-local Cashiers = workspace.Cashiers
-local Player = Players.LocalPlayer
-
-loadstring(game:HttpGet("https://github.com/applless/RandomScripts/raw/main/AntiAfk"))()
-pcall(function()local a=game:GetService("ReplicatedStorage").MainEvent;local b={"CHECKER_1","TeleportDetect","OneMoreTime"}local c;c=hookmetamethod(game,"__namecall",function(...)local d={...}local self=d[1]local e=getnamecallmethod()local f=getcallingscript()if e=="FireServer"and self==a and table.find(b,d[2])then return end return c(...)end)end)
-
-for i,v in pairs(workspace:GetDescendants()) do 
-	if (v:IsA("Seat")) or (v:IsA("VehicleSeat")) then 
-		v.Disabled = true
-	end
-end
-
-
-
-local GetClosestPart = function(Table)
-	local ClosestPart = nil
-
-	for i,v in pairs(Table) do
-		if (ClosestPart == nil) then
-			ClosestPart = v
-		else
-			if ((Player.Character.HumanoidRootPart.Position - v.Position).Magnitude) < ((ClosestPart.Position - Player.Character.HumanoidRootPart.Position).Magnitude) then
-				ClosestPart = v
-			end
-		end
-	end
-	
-	return ClosestPart
-end
-
-local CheckKOed = function()
-	if (Player.Character.BodyEffects["K.O"].Value == true) then 
-		Player.Character.Humanoid.Health = 0 
-
-		for i,v in pairs(Player.Character:GetChildren()) do 
-			if (v:IsA("BasePart")) then 
-				v:Destroy()
-			end
-		end
-	end
-end
-
-local GetCashier = function()
-	local AvailableCashiers = {}
-	for i,v in pairs(Cashiers:GetChildren()) do 
-		if (v:FindFirstChild("Humanoid")) and (v.Humanoid.Health > 0) then 
-			AvailableCashiers[#AvailableCashiers+1] = v.Open
-		end
-	end
-	
-	local ClosestPart = GetClosestPart(AvailableCashiers)
-	
-	if (ClosestPart) and (ClosestPart.Parent) then 
-		return ClosestPart.Parent
-	else 
-		return nil
-	end
-
-end
-
-local GetCashParts = function()
-	local CashParts = {}
-	for i,v in pairs(workspace.Ignored.Drop:GetChildren()) do 
-		if (v.Name == "MoneyDrop") and ((Player.Character.HumanoidRootPart.Position - v.Position).Magnitude < 13) then 
-			CashParts[#CashParts+1] = v
-		end
-	end
-	
-	return CashParts
-end
-
-
-task.spawn(function()
-	while true and task.wait(0.33) do 
-		if (Enabled == true) and (Player.Character) and (Player.Character:FindFirstChild("FULLY_LOADED_CHAR"))  then 
-			local Cashier = nil
-			repeat 
-				Cashier = GetCashier()
-				task.wait()
-			until (Cashier ~= nil)
-
-			
-			repeat 
-				if (Player.Backpack:FindFirstChild("Combat")) then 
-					task.wait(0.77)
-					pcall(function()
-						Player.Backpack.Combat.Parent = Player.Character
-					end)
-					task.wait()
-				end
-				Player.Character.HumanoidRootPart.Velocity = Vector3.new(0, 0, 0)
-				Player.Character.HumanoidRootPart.CFrame = Cashier.Open.CFrame * CFrame.Angles(0, math.random(-180, 0), 0)
-				
-				if (Player.Character:FindFirstChild("Combat")) then 
-					Player.Character.Combat:Activate()
-					--Player.Character.Combat:Deactivate() Disabled because super punch is faster and more reliable on low fps.
-				end
-
-				
-				task.wait()
-			until (Cashier.Humanoid.Health <= 0) or (Player.Character.Humanoid.Health <= 0) or (Player.Character.BodyEffects["K.O"].Value == true) or (Enabled == false)
-			
-			pcall(CheckKOed)
-			
-			repeat 
-				local CashParts = GetCashParts()
-				
-				Player.Character.HumanoidRootPart.Velocity = Vector3.new(0, 0, 0)
-				Player.Character.HumanoidRootPart.CFrame = Cashier.Open.CFrame + Vector3.new(0, 2, 0)
-				
-				for i,v in pairs(CashParts) do 
-					if (v:FindFirstChild("ClickDetector")) then 
-						fireclickdetector(v.ClickDetector)
-					end
-				end
-
-				task.wait()
-			until (#CashParts <= 0) or (Player.Character.Humanoid.Health <= 0) or (Player.Character.BodyEffects["K.O"].Value == true) or (Enabled == false)
-			
-			pcall(CheckKOed)
-		end
-	end
-end)
-
 game:GetService("RunService"):Set3dRenderingEnabled(false)
 pcall(function() UserSettings().GameSettings.MasterVolume = 0 end)
 pcall(function() settings().Rendering.QualityLevel = "Level01" end)
 
-if (game:IsLoaded() == false) then 
-	game.Loaded:Wait()
-end
-task.wait(1)
 
-local Player = game:GetService("Players").LocalPlayer
-local UserInput = game:GetService("UserInputService")
-local Core = game:GetService("CoreGui")
-local Run = game:GetService("RunService")
-local Conn = nil
-
-local Converted = {
-	["_Saver"] = Instance.new("ScreenGui");
-	["_BackFrame"] = Instance.new("Frame");
-	["_BackGradient"] = Instance.new("UIGradient");
-	["_MainFrame"] = Instance.new("Frame");
-	["_MainCorner"] = Instance.new("UICorner");
-	["_MainStroke"] = Instance.new("UIStroke");
-	["_Title"] = Instance.new("TextLabel");
-	["_UIAspectRatioConstraint"] = Instance.new("UIAspectRatioConstraint");
-	["_Pollen"] = Instance.new("TextLabel");
-	["_UIPadding"] = Instance.new("UIPadding");
-	["_UICorner"] = Instance.new("UICorner");
-	["_UIStroke"] = Instance.new("UIStroke");
-	["_UIAspectRatioConstraint1"] = Instance.new("UIAspectRatioConstraint");
-	["_Honey"] = Instance.new("TextLabel");
-	["_UIPadding1"] = Instance.new("UIPadding");
-	["_UICorner1"] = Instance.new("UICorner");
-	["_UIStroke1"] = Instance.new("UIStroke");
-	["_UIAspectRatioConstraint2"] = Instance.new("UIAspectRatioConstraint");
-	["_TextButton"] = Instance.new("TextButton");
-	["_UIStroke2"] = Instance.new("UIStroke");
-	["_UICorner2"] = Instance.new("UICorner");
-	["_UIAspectRatioConstraint3"] = Instance.new("UIAspectRatioConstraint");
+-- Define a global table with alternate usernames
+getgenv().alts = {
+    Alt1 = "vdhcdropper65", -- Replace with the first alt username
+    Alt2 = "vdhcdropper66", -- Replace with the second alt username
+    Alt3 = "hifortnitekids2" -- Replace with the third alt username
 }
 
-Converted["_Saver"].IgnoreGuiInset = true
-Converted["_Saver"].ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-Converted["_Saver"].Name = "Saver"
-Converted["_Saver"].Parent = game:GetService("CoreGui")
-Converted["_Saver"].Enabled = false
-
-Converted["_BackFrame"].AnchorPoint = Vector2.new(0.5, 0.5)
-Converted["_BackFrame"].BackgroundColor3 = Color3.fromRGB(33.00000183284283, 33.00000183284283, 33.00000183284283)
-Converted["_BackFrame"].BorderColor3 = Color3.fromRGB(0, 0, 0)
-Converted["_BackFrame"].BorderSizePixel = 0
-Converted["_BackFrame"].Position = UDim2.new(0.5, 0, 0.5, 0)
-Converted["_BackFrame"].Size = UDim2.new(1, 0, 1, 0)
-Converted["_BackFrame"].Name = "BackFrame"
-Converted["_BackFrame"].Parent = Converted["_Saver"]
-
-Converted["_BackGradient"].Color = ColorSequence.new{
-	ColorSequenceKeypoint.new(0, Color3.fromRGB(245.00000059604645, 244.0000006556511, 244.0000006556511)),
-	ColorSequenceKeypoint.new(0.15224914252758026, Color3.fromRGB(235.0000011920929, 234.00000125169754, 234.00000125169754)),
-	ColorSequenceKeypoint.new(0.3581314980983734, Color3.fromRGB(225.00000178813934, 224.000001847744, 224.000001847744)),
-	ColorSequenceKeypoint.new(0.5657439827919006, Color3.fromRGB(215.0000023841858, 214.00000244379044, 214.00000244379044)),
-	ColorSequenceKeypoint.new(0.7525951862335205, Color3.fromRGB(205.00000298023224, 205.00000298023224, 205.00000298023224)),
-	ColorSequenceKeypoint.new(0.8927335739135742, Color3.fromRGB(195.0000035762787, 195.0000035762787, 195.0000035762787)),
-	ColorSequenceKeypoint.new(1, Color3.fromRGB(185.00000417232513, 185.00000417232513, 185.00000417232513))
-}
-Converted["_BackGradient"].Rotation = 90
-Converted["_BackGradient"].Name = "BackGradient"
-Converted["_BackGradient"].Parent = Converted["_BackFrame"]
-
-Converted["_MainFrame"].AnchorPoint = Vector2.new(0.5, 0.5)
-Converted["_MainFrame"].BackgroundColor3 = Color3.fromRGB(22.000000588595867, 22.000000588595867, 22.000000588595867)
-Converted["_MainFrame"].BorderColor3 = Color3.fromRGB(0, 0, 0)
-Converted["_MainFrame"].BorderSizePixel = 0
-Converted["_MainFrame"].Position = UDim2.new(0.5, 0, 0.5, 0)
-Converted["_MainFrame"].Size = UDim2.new(0, 400, 0, 230)
-Converted["_MainFrame"].Name = "MainFrame"
-Converted["_MainFrame"].Parent = Converted["_BackFrame"]
-
-Converted["_MainCorner"].CornerRadius = UDim.new(0, 6)
-Converted["_MainCorner"].Name = "MainCorner"
-Converted["_MainCorner"].Parent = Converted["_MainFrame"]
-
-Converted["_MainStroke"].Color = Color3.fromRGB(122.00000032782555, 122.00000032782555, 122.00000032782555)
-Converted["_MainStroke"].Name = "MainStroke"
-Converted["_MainStroke"].Parent = Converted["_MainFrame"]
-
-Converted["_Title"].Font = Enum.Font.GothamBold
-Converted["_Title"].Text = "MacroV3"
-Converted["_Title"].TextColor3 = Color3.fromRGB(200.00000327825546, 200.00000327825546, 200.00000327825546)
-Converted["_Title"].TextSize = 30
-Converted["_Title"].AnchorPoint = Vector2.new(0.5, 0.04200000074505806)
-Converted["_Title"].BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-Converted["_Title"].BackgroundTransparency = 1
-Converted["_Title"].BorderColor3 = Color3.fromRGB(0, 0, 0)
-Converted["_Title"].BorderSizePixel = 0
-Converted["_Title"].Position = UDim2.new(0.5, 0, 0.0420000007, 0)
-Converted["_Title"].Size = UDim2.new(0, 200, 0, 50)
-Converted["_Title"].Name = "Title"
-Converted["_Title"].Parent = Converted["_MainFrame"]
-
-Converted["_UIAspectRatioConstraint"].Parent = Converted["_Title"]
-
-Converted["_Pollen"].Font = Enum.Font.Gotham
-Converted["_Pollen"].Text = "Pollen : 999,999,999"
-Converted["_Pollen"].TextColor3 = Color3.fromRGB(200.00000327825546, 200.00000327825546, 200.00000327825546)
-Converted["_Pollen"].TextSize = 15
-Converted["_Pollen"].TextTransparency = 0.20000000298023224
-Converted["_Pollen"].TextXAlignment = Enum.TextXAlignment.Left
-Converted["_Pollen"].AnchorPoint = Vector2.new(0.5, 0.30000001192092896)
-Converted["_Pollen"].BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-Converted["_Pollen"].BackgroundTransparency = 0.800000011920929
-Converted["_Pollen"].BorderColor3 = Color3.fromRGB(0, 0, 0)
-Converted["_Pollen"].BorderSizePixel = 0
-Converted["_Pollen"].Position = UDim2.new(0.5, 0, 0.300000012, 0)
-Converted["_Pollen"].Size = UDim2.new(0.649999976, 0, 0.119999997, 0)
-Converted["_Pollen"].Name = "Pollen"
-Converted["_Pollen"].Parent = Converted["_MainFrame"]
-
-Converted["_UIPadding"].PaddingLeft = UDim.new(0, 8)
-Converted["_UIPadding"].Parent = Converted["_Pollen"]
-
-Converted["_UICorner"].CornerRadius = UDim.new(0, 6)
-Converted["_UICorner"].Parent = Converted["_Pollen"]
-
-Converted["_UIStroke"].ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-Converted["_UIStroke"].Color = Color3.fromRGB(122.00000032782555, 122.00000032782555, 122.00000032782555)
-Converted["_UIStroke"].Parent = Converted["_Pollen"]
-
-Converted["_UIAspectRatioConstraint1"].AspectRatio = 9.300000190734863
-Converted["_UIAspectRatioConstraint1"].Parent = Converted["_Pollen"]
-
-Converted["_Honey"].Font = Enum.Font.Gotham
-Converted["_Honey"].Text = "Honey : 999,999,999"
-Converted["_Honey"].TextColor3 = Color3.fromRGB(200.00000327825546, 200.00000327825546, 200.00000327825546)
-Converted["_Honey"].TextSize = 15
-Converted["_Honey"].TextTransparency = 0.20000000298023224
-Converted["_Honey"].TextXAlignment = Enum.TextXAlignment.Left
-Converted["_Honey"].AnchorPoint = Vector2.new(0.5, 0.47999998927116394)
-Converted["_Honey"].BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-Converted["_Honey"].BackgroundTransparency = 0.800000011920929
-Converted["_Honey"].BorderColor3 = Color3.fromRGB(0, 0, 0)
-Converted["_Honey"].BorderSizePixel = 0
-Converted["_Honey"].Position = UDim2.new(0.5, 0, 0.479999989, 0)
-Converted["_Honey"].Size = UDim2.new(0.649999976, 0, 0.119999997, 0)
-Converted["_Honey"].Name = "Honey"
-Converted["_Honey"].Parent = Converted["_MainFrame"]
-
-Converted["_UIPadding1"].PaddingLeft = UDim.new(0, 8)
-Converted["_UIPadding1"].Parent = Converted["_Honey"]
-
-Converted["_UICorner1"].CornerRadius = UDim.new(0, 6)
-Converted["_UICorner1"].Parent = Converted["_Honey"]
-
-Converted["_UIStroke1"].ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-Converted["_UIStroke1"].Color = Color3.fromRGB(122.00000032782555, 122.00000032782555, 122.00000032782555)
-Converted["_UIStroke1"].Parent = Converted["_Honey"]
-
-Converted["_UIAspectRatioConstraint2"].AspectRatio = 9.300000190734863
-Converted["_UIAspectRatioConstraint2"].Parent = Converted["_Honey"]
-
-Converted["_TextButton"].Font = Enum.Font.Gotham
-Converted["_TextButton"].Text = "Disable\nPress ';' if doesn't work"
-Converted["_TextButton"].TextColor3 = Color3.fromRGB(200.00000327825546, 200.00000327825546, 200.00000327825546)
-Converted["_TextButton"].TextSize = 14
-Converted["_TextButton"].TextTransparency = 0.20000000298023224
-Converted["_TextButton"].AnchorPoint = Vector2.new(0.5, 0.760000011920929)
-Converted["_TextButton"].BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-Converted["_TextButton"].BackgroundTransparency = 0.800000011920929
-Converted["_TextButton"].BorderColor3 = Color3.fromRGB(0, 0, 0)
-Converted["_TextButton"].BorderSizePixel = 0
-Converted["_TextButton"].Position = UDim2.new(0.5, 0, 0.760000012, 0)
-Converted["_TextButton"].Size = UDim2.new(0, 160, 0, 40)
-Converted["_TextButton"].Parent = Converted["_MainFrame"]
-
-Converted["_UIStroke2"].ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-Converted["_UIStroke2"].Color = Color3.fromRGB(122.00000032782555, 122.00000032782555, 122.00000032782555)
-Converted["_UIStroke2"].Parent = Converted["_TextButton"]
-
-Converted["_UICorner2"].CornerRadius = UDim.new(0, 6)
-Converted["_UICorner2"].Parent = Converted["_TextButton"]
-
-Converted["_UIAspectRatioConstraint3"].AspectRatio = 4
-Converted["_UIAspectRatioConstraint3"].Parent = Converted["_TextButton"]
-
-if (Core:FindFirstChild("MV3") == nil) then 
-	repeat task.wait(1/2) warn("waiting for mv3") until (Core:FindFirstChild("MV3") ~= nil)
-	task.wait(5)
+-- Function to wait for a player with an indefinite wait
+local function waitForPlayer(playerName)
+    while true do
+        local player = game.Players:FindFirstChild(playerName)
+        if player then
+            return player
+        end
+        task.wait(1) -- Check every second
+    end
 end
 
-local Containers = game:GetService("CoreGui").MV3.MainFrame._.Containers 
-local Button = nil
-local Toggled = false
-
-local Abbreviate = loadstring(game:HttpGet("https://github.com/applless/RandomScripts/raw/main/Abbreviation"))()
-	
-for i,v in pairs(Containers:GetChildren()) do
-	if (v.TabTitle.Text == "Misc") then 
-		Button = v.Container.Toggle.ToggleButton 
-	end
+-- Function to count active alts
+local function getActiveAlts()
+    local activeAlts = {}
+    for _, altUsername in pairs(getgenv().alts) do
+        local altPlayer = game.Players:FindFirstChild(altUsername)
+        if altPlayer then
+            table.insert(activeAlts, altPlayer)
+        end
+    end
+    return activeAlts
 end
 
-if (Button.Parent:FindFirstChild("FixMsg") == nil) then 
-    local Msg = Button.Parent.TextLabel:Clone()
-    Msg.Position = UDim2.new(0, 85, 0, 0)
-    Msg.TextSize = 10 
-    Msg.Text = "(Fix Active)"
-    Msg.TextTransparency = 1/3
-    Msg.Name = "FixMsg"
-    Msg.Parent = Button.Parent
+-- Function to perform trading
+local function performTrade(recipientUsername, totalTools)
+    -- Wait for the recipient player to join, even if they join later
+    local recipient = waitForPlayer(recipientUsername)
+
+    if not recipient then
+        print("Recipient not found.")
+        return
+    end
+
+    local activeAlts = getActiveAlts()
+    local numAlts = #activeAlts
+    if numAlts == 0 then
+        print("No alts available to trade.")
+        return
+    end
+
+    -- Calculate tools per alt
+    local toolsPerAlt = math.floor(totalTools / numAlts)
+    local extraTools = totalTools % numAlts
+
+    print("Total tools: " .. totalTools)
+    print("Active alts: " .. numAlts)
+    print("Tools per alt: " .. toolsPerAlt)
+    print("Extra tools to distribute: " .. extraTools)
+
+    -- Trade tools from each alt
+    local remainingTools = totalTools
+    for index, altPlayer in ipairs(activeAlts) do
+        local backpack = altPlayer:FindFirstChild("Backpack")
+        local tools = {}
+        if backpack then
+            for _, item in pairs(backpack:GetChildren()) do
+                if item:IsA("Tool") then
+                    table.insert(tools, item)
+                end
+            end
+        end
+
+        local toolsToOffer = toolsPerAlt
+
+        -- Distribute extra tools to the first few alts
+        if extraTools > 0 then
+            toolsToOffer = toolsToOffer + 1
+            extraTools = extraTools - 1
+        end
+
+        print(altPlayer.Name .. " is set to trade " .. toolsToOffer .. " tools.")
+        while toolsToOffer > 0 and remainingTools > 0 do
+            local tool = table.remove(tools, 1) -- Take the first tool available
+            if tool and altPlayer.Character and altPlayer.Character:FindFirstChild("Humanoid") then
+                altPlayer.Character.Humanoid:EquipTool(tool)
+                task.wait(0.2) -- Wait between equipping items
+                local offerEvent = tool:FindFirstChild("offer")
+                if offerEvent then
+                    local args = {recipient}
+                    offerEvent:FireServer(unpack(args))
+                    toolsToOffer = toolsToOffer - 1
+                    remainingTools = remainingTools - 1
+                    print("Offered tool: " .. tool.Name)
+                else
+                    print("Failed to offer " .. tool.Name .. ". Trying a different tool.")
+                    table.insert(tools, tool) -- Reinsert the tool for retry
+                end
+            end
+            -- If no tools are left, refresh the tool list from the backpack
+            if #tools == 0 and altPlayer:FindFirstChild("Backpack") then
+                for _, item in pairs(altPlayer.Backpack:GetChildren()) do
+                    if item:IsA("Tool") and not table.find(tools, item) then
+                        table.insert(tools, item)
+                    end
+                end
+            end
+            -- Prevent infinite loop if tools are exhausted
+            if #tools == 0 then
+                break
+            end
+        end
+
+        if toolsToOffer > 0 then
+            print(altPlayer.Name .. " ran out of tools before completing their trade.")
+        end
+    end
+
+    -- Final check for any unoffered tools
+    if remainingTools > 0 then
+        print("Not all tools could be traded. Remaining: " .. remainingTools)
+    else
+        print("Trade successful. All " .. totalTools .. " tools have been offered.")
+    end
 end
 
-Conn = Button.MouseButton1Click:Connect(function()
-	Run:Set3dRenderingEnabled(false)
-	Converted["_Saver"].Enabled = true 
-	settings().Rendering.QualityLevel = "Level01"
-    UserSettings().GameSettings.MasterVolume = 0
-
-	task.spawn(function()
-		while (Converted["_Saver"].Enabled == true) and task.wait(1/2) do 
-			Converted["_Pollen"].Text = "Pollen : "..Abbreviate(Player.CoreStats.Pollen.Value).." / "..Abbreviate(Player.CoreStats.Capacity.Value)
-			Converted["_Honey"].Text = "Honey : "..Abbreviate(Player.CoreStats.Honey.Value)
-		end
-	end)
-	
-	Converted["_TextButton"].MouseButton1Click:Connect(function()
-		Converted["_Saver"].Enabled = false 
-		Run:Set3dRenderingEnabled(true)
-	end)
-	
-	UserInput.InputBegan:Connect(function(Input, Processed)
-		if (Input.KeyCode == Enum.KeyCode.Semicolon) and (not Processed) then 
-			Converted["_Saver"].Enabled = false 
-			Run:Set3dRenderingEnabled(true)
-		end
-	end)
-end)
-
-
-Player.Chatted:Connect(function(Msg)
-	if (Msg == "/dis") then 
-		Conn:Disconnect()
-		Converted["_Saver"]:Destroy()
-	end
-end)
-
-getgenv().Enabled = true
-getgenv().Dis = function()
-	Enabled = false
-
-	for i,v in pairs(workspace:GetDescendants()) do 
-		if (v:IsA("Seat")) or (v:IsA("VehicleSeat")) then 
-			v.Disabled = true
-		end
-	end
+-- Function to handle commands
+local function handleCommand(command)
+    if command:lower() == ".setup" then
+        print("Setup command executed.")
+        -- Setup logic if needed
+    else
+        -- Match the .tradeall command with arguments, allowing underscores in usernames
+        local recipientUsername, amountOfTools = command:match("^%.tradeall%s+([%w_]+)%s+(%d+)$")
+        amountOfTools = tonumber(amountOfTools)
+        if recipientUsername and amountOfTools then
+            performTrade(recipientUsername, amountOfTools)
+        else
+            print("Invalid .tradeall command. Use the format: .tradeall <recipient_username> <amount>")
+        end
+    end
 end
 
-if (not game:IsLoaded()) then 
-	game.Loaded:Wait()
-	task.wait(2)
+-- WebSocket connection
+local ws = WebSocket.connect("ws://192.168.1.17:8765")
+if ws then
+    print("Connected to WebSocket!")
+    ws.OnMessage:Connect(function(msg)
+        print("Command received via WebSocket: " .. msg)
+        handleCommand(msg)
+    end)
+    ws.OnClose:Connect(function()
+        print("WebSocket connection closed.")
+    end)
+else
+    print("Failed to connect to WebSocket.")
 end
 
-repeat task.wait(0.2) until (game:GetService("Players").LocalPlayer) and (game:GetService("Players").LocalPlayer.Character)
+-- Ensure the script runs properly when executed
+local worldFolder = workspace:FindFirstChild("world")
 
-local Players = game:GetService("Players")
-local Cashiers = workspace.Cashiers
-local Player = Players.LocalPlayer
-
-loadstring(game:HttpGet("https://github.com/applless/RandomScripts/raw/main/AntiAfk"))()
-pcall(function()local a=game:GetService("ReplicatedStorage").MainEvent;local b={"CHECKER_1","TeleportDetect","OneMoreTime"}local c;c=hookmetamethod(game,"__namecall",function(...)local d={...}local self=d[1]local e=getnamecallmethod()local f=getcallingscript()if e=="FireServer"and self==a and table.find(b,d[2])then return end return c(...)end)end)
-
-for i,v in pairs(workspace:GetDescendants()) do 
-	if (v:IsA("Seat")) or (v:IsA("VehicleSeat")) then 
-		v.Disabled = true
-	end
+-- Check if the world folder exists
+if worldFolder then
+    local mapFolder = worldFolder:FindFirstChild("map")
+    if mapFolder then
+        -- Destroy all children of the map folder
+        for _, child in pairs(mapFolder:GetChildren()) do
+            child:Destroy()
+        end
+    end
 end
 
+-- Get the player's character
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
 
-
-local GetClosestPart = function(Table)
-	local ClosestPart = nil
-
-	for i,v in pairs(Table) do
-		if (ClosestPart == nil) then
-			ClosestPart = v
-		else
-			if ((Player.Character.HumanoidRootPart.Position - v.Position).Magnitude) < ((ClosestPart.Position - Player.Character.HumanoidRootPart.Position).Magnitude) then
-				ClosestPart = v
-			end
-		end
-	end
-	
-	return ClosestPart
+-- Get the character's position
+local position = character:FindFirstChild("HumanoidRootPart") and character.HumanoidRootPart.Position
+if position then
+    -- Create a baseplate under the player
+    local baseplate = Instance.new("Part")
+    baseplate.Size = Vector3.new(50, 1, 50) -- Adjust the size of the baseplate as needed
+    baseplate.Position = Vector3.new(position.X, position.Y - 3, position.Z) -- Position below the player
+    baseplate.Anchored = true
+    baseplate.BrickColor = BrickColor.new("Medium stone grey")
+    baseplate.Parent = workspace
 end
 
-local CheckKOed = function()
-	if (Player.Character.BodyEffects["K.O"].Value == true) then 
-		Player.Character.Humanoid.Health = 0 
-
-		for i,v in pairs(Player.Character:GetChildren()) do 
-			if (v:IsA("BasePart")) then 
-				v:Destroy()
-			end
-		end
-	end
-end
-
-local GetCashier = function()
-	local AvailableCashiers = {}
-	for i,v in pairs(Cashiers:GetChildren()) do 
-		if (v:FindFirstChild("Humanoid")) and (v.Humanoid.Health > 0) then 
-			AvailableCashiers[#AvailableCashiers+1] = v.Open
-		end
-	end
-	
-	local ClosestPart = GetClosestPart(AvailableCashiers)
-	
-	if (ClosestPart) and (ClosestPart.Parent) then 
-		return ClosestPart.Parent
-	else 
-		return nil
-	end
-
-end
-
-local GetCashParts = function()
-	local CashParts = {}
-	for i,v in pairs(workspace.Ignored.Drop:GetChildren()) do 
-		if (v.Name == "MoneyDrop") and ((Player.Character.HumanoidRootPart.Position - v.Position).Magnitude < 13) then 
-			CashParts[#CashParts+1] = v
-		end
-	end
-	
-	return CashParts
-end
-
-
-task.spawn(function()
-	while true and task.wait(0.33) do 
-		if (Enabled == true) and (Player.Character) and (Player.Character:FindFirstChild("FULLY_LOADED_CHAR"))  then 
-			local Cashier = nil
-			repeat 
-				Cashier = GetCashier()
-				task.wait()
-			until (Cashier ~= nil)
-
-			
-			repeat 
-				if (Player.Backpack:FindFirstChild("Combat")) then 
-					task.wait(0.77)
-					pcall(function()
-						Player.Backpack.Combat.Parent = Player.Character
-					end)
-					task.wait()
-				end
-				Player.Character.HumanoidRootPart.Velocity = Vector3.new(0, 0, 0)
-				Player.Character.HumanoidRootPart.CFrame = Cashier.Open.CFrame * CFrame.Angles(0, math.random(-180, 0), 0)
-				
-				if (Player.Character:FindFirstChild("Combat")) then 
-					Player.Character.Combat:Activate()
-					--Player.Character.Combat:Deactivate() Disabled because super punch is faster and more reliable on low fps.
-				end
-
-				
-				task.wait()
-			until (Cashier.Humanoid.Health <= 0) or (Player.Character.Humanoid.Health <= 0) or (Player.Character.BodyEffects["K.O"].Value == true) or (Enabled == false)
-			
-			pcall(CheckKOed)
-			
-			repeat 
-				local CashParts = GetCashParts()
-				
-				Player.Character.HumanoidRootPart.Velocity = Vector3.new(0, 0, 0)
-				Player.Character.HumanoidRootPart.CFrame = Cashier.Open.CFrame + Vector3.new(0, 2, 0)
-				
-				for i,v in pairs(CashParts) do 
-					if (v:FindFirstChild("ClickDetector")) then 
-						fireclickdetector(v.ClickDetector)
-					end
-				end
-
-				task.wait()
-			until (#CashParts <= 0) or (Player.Character.Humanoid.Health <= 0) or (Player.Character.BodyEffects["K.O"].Value == true) or (Enabled == false)
-			
-			pcall(CheckKOed)
-		end
-	end
-end)
+wait(4)
+game:GetService("RunService"):Set3dRenderingEnabled(true)
