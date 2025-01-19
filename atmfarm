@@ -1,3 +1,5 @@
+setfpscap(7)
+
 game:GetService("RunService"):Set3dRenderingEnabled(false)
 pcall(function() UserSettings().GameSettings.MasterVolume = 0 end)
 pcall(function() settings().Rendering.QualityLevel = "Level01" end)
