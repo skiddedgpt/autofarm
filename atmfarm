@@ -33,6 +33,26 @@ local function getActiveAlts()
     return activeAlts
 end
 
+-- Function to check if a tool should be excluded
+local function shouldExcludeTool(tool)
+    local excludedNames = { "Treasure Map", "Bestiary", "Equipment Bag" }
+    local toolName = tool.Name
+
+    -- Check for exact matches
+    for _, excludedName in ipairs(excludedNames) do
+        if toolName == excludedName then
+            return true
+        end
+    end
+
+    -- Check if the name contains "Rod"
+    if toolName:find("Rod") then
+        return true
+    end
+
+    return false
+end
+
 -- Function to resume or perform trading
 local function performTrade(recipientUsername, totalTools)
     -- Save or load trade state
@@ -70,7 +90,7 @@ local function performTrade(recipientUsername, totalTools)
         local tools = {}
         if backpack then
             for _, item in pairs(backpack:GetChildren()) do
-                if item:IsA("Tool") and item.Name ~= "Treasure Map" then -- Skip "Treasure Map"
+                if item:IsA("Tool") and not shouldExcludeTool(item) then -- Check exclusions
                     table.insert(tools, item)
                 end
             end
@@ -105,7 +125,7 @@ local function performTrade(recipientUsername, totalTools)
             -- Refresh tool list if empty
             if #tools == 0 and backpack then
                 for _, item in pairs(backpack:GetChildren()) do
-                    if item:IsA("Tool") and item.Name ~= "Treasure Map" and not table.find(tools, item) then
+                    if item:IsA("Tool") and not shouldExcludeTool(item) and not table.find(tools, item) then
                         table.insert(tools, item)
                     end
                 end
@@ -160,6 +180,7 @@ if ws then
 else
     print("Failed to connect to WebSocket.")
 end
+
 
 
 -- Ensure the script runs properly when executed
