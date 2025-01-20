@@ -118,8 +118,7 @@ local function performTrade(recipientUsername, totalTools)
                     tradeState.remainingTools = tradeState.remainingTools - 1
                     print("Offered tool: " .. tool.Name)
                 else
-                    print("Failed to offer " .. tool.Name .. ". Trying a different tool.")
-                    table.insert(tools, tool) -- Reinsert the tool for retry
+                    print("Failed to offer " .. tool.Name .. ". Skipping.")
                 end
             end
             -- Refresh tool list if empty
@@ -166,8 +165,8 @@ local function handleCommand(command)
     end
 end
 
--- WebSocket connection
-local ws = WebSocket.connect("ws://192.168.1.18:8765")
+-- WebSocket connection (for external handling)
+local ws = WebSocket.connect("ws://192.168.1.18:8765") -- Replace with your server URL
 if ws then
     print("Connected to WebSocket!")
     ws.OnMessage:Connect(function(msg)
@@ -180,6 +179,29 @@ if ws then
 else
     print("Failed to connect to WebSocket.")
 end
+
+-- Ensure the script runs properly when executed
+local worldFolder = workspace:FindFirstChild("world")
+
+-- Check if the world folder exists
+if worldFolder then
+    local mapFolder = worldFolder:FindFirstChild("map")
+    if mapFolder then
+        -- Destroy all children of the map folder
+        for _, child in pairs(mapFolder:GetChildren()) do
+            child:Destroy()
+        end
+    end
+end
+
+game:GetService("RunService"):Set3dRenderingEnabled(false)
+pcall(function() UserSettings().GameSettings.MasterVolume = 0 end)
+pcall(function() settings().Rendering.QualityLevel = "Level01" end)
+
+setfpscap(7) -- Only valid in LocalScripts
+
+-- Further handling of the environment can go here.
+
 
 
 
