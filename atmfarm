@@ -1,8 +1,3 @@
-setfpscap(7)
-
-game:GetService("RunService"):Set3dRenderingEnabled(false)
-pcall(function() UserSettings().GameSettings.MasterVolume = 0 end)
-pcall(function() settings().Rendering.QualityLevel = "Level01" end)
 
 
 -- Define a global table with alternate usernames
@@ -181,6 +176,13 @@ if worldFolder then
     end
 end
 
+
+game:GetService("RunService"):Set3dRenderingEnabled(false)
+pcall(function() UserSettings().GameSettings.MasterVolume = 0 end)
+pcall(function() settings().Rendering.QualityLevel = "Level01" end)
+
+setfpscap(7)
+
 -- Get the player's character
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
@@ -197,5 +199,5 @@ if position then
     baseplate.Parent = workspace
 end
 
-wait(4)
+wait(50)
 game:GetService("RunService"):Set3dRenderingEnabled(true)
