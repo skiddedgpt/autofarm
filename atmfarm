@@ -1,23 +1,3 @@
-
-wait(0.5)local ba=Instance.new("ScreenGui")
-local ca=Instance.new("TextLabel")local da=Instance.new("Frame")
-local _b=Instance.new("TextLabel")local ab=Instance.new("TextLabel")ba.Parent=game.CoreGui
-ba.ZIndexBehavior=Enum.ZIndexBehavior.Sibling;ca.Parent=ba;ca.Active=true
-ca.BackgroundColor3=Color3.new(0.176471,0.176471,0.176471)ca.Draggable=true
-ca.Position=UDim2.new(0.698610067,0,0.098096624,0)ca.Size=UDim2.new(0,370,0,52)
-ca.Font=Enum.Font.SourceSansSemibold;ca.Text="Anti AFK Script"ca.TextColor3=Color3.new(0,1,1)
-ca.TextSize=22;da.Parent=ca
-da.BackgroundColor3=Color3.new(0.196078,0.196078,0.196078)da.Position=UDim2.new(0,0,1.0192306,0)
-da.Size=UDim2.new(0,370,0,107)_b.Parent=da
-_b.BackgroundColor3=Color3.new(0.176471,0.176471,0.176471)_b.Position=UDim2.new(0,0,0.800455689,0)
-_b.Size=UDim2.new(0,370,0,21)_b.Font=Enum.Font.Arial;_b.Text="Made by Dynamic. (please subscribe)"
-_b.TextColor3=Color3.new(0,1,1)_b.TextSize=20;ab.Parent=da
-ab.BackgroundColor3=Color3.new(0.176471,0.176471,0.176471)ab.Position=UDim2.new(0,0,0.158377,0)
-ab.Size=UDim2.new(0,370,0,44)ab.Font=Enum.Font.ArialBold;ab.Text="Status: Active"
-ab.TextColor3=Color3.new(0,1,1)ab.TextSize=20;local bb=game:service'VirtualUser'
-game:service'Players'.LocalPlayer.Idled:connect(function()
-bb:CaptureController()bb:ClickButton2(Vector2.new())
-ab.Text="Roblox Tried to kick you but we didnt let them kick you :D"wait(2)ab.Text="Status : Active"end)
 -- Define a global table with alternate usernames
 getgenv().alts = {
     Alt1 = "vdhcdropper65", -- Replace with the first alt username
@@ -27,6 +7,7 @@ getgenv().alts = {
 
 -- Persistent table to track ongoing trades
 local ongoingTrades = {}
+local disconnectedAlts = {} -- Tracks alts that are disconnected due to low items
 
 -- Function to wait for a player with an indefinite wait
 local function waitForPlayer(playerName)
@@ -44,7 +25,7 @@ local function getActiveAlts()
     local activeAlts = {}
     for _, altUsername in pairs(getgenv().alts) do
         local altPlayer = game.Players:FindFirstChild(altUsername)
-        if altPlayer then
+        if altPlayer and not disconnectedAlts[altUsername] then
             table.insert(activeAlts, altPlayer)
         end
     end
@@ -71,16 +52,25 @@ local function shouldExcludeTool(tool)
     return false
 end
 
--- Function to resume or perform trading
+-- Function to disconnect an alt from WebSocket
+local function disconnectAlt(altUsername)
+    print("Disconnecting alt due to low items: " .. altUsername)
+    disconnectedAlts[altUsername] = true
+end
+
+-- Function to perform trade and offer tools
 local function performTrade(recipientUsername, totalTools)
     -- Save or load trade state
     local tradeState = ongoingTrades[recipientUsername] or {remainingTools = totalTools}
     tradeState.totalTools = totalTools
     ongoingTrades[recipientUsername] = tradeState
 
+    -- Debugging print statements
+    print("Performing trade with: " .. recipientUsername)
+    print("Total tools to offer: " .. totalTools)
+
     -- Wait for the recipient player to join, even if they join later
     local recipient = waitForPlayer(recipientUsername)
-
     if not recipient then
         print("Recipient not found.")
         return
@@ -108,10 +98,17 @@ local function performTrade(recipientUsername, totalTools)
         local tools = {}
         if backpack then
             for _, item in pairs(backpack:GetChildren()) do
-                if item:IsA("Tool") and not shouldExcludeTool(item) then -- Check exclusions
+                if item:IsA("Tool") and not shouldExcludeTool(item) then
                     table.insert(tools, item)
                 end
             end
+        end
+
+        -- Disconnect alt if it has fewer than 100 tools
+        if #tools < 100 then
+            disconnectAlt(altPlayer.Name)
+            print(altPlayer.Name .. " disconnected due to low item count: " .. #tools)
+            continue
         end
 
         local toolsToOffer = toolsPerAlt
@@ -126,19 +123,26 @@ local function performTrade(recipientUsername, totalTools)
         while toolsToOffer > 0 and tradeState.remainingTools > 0 do
             local tool = table.remove(tools, 1) -- Take the first tool available
             if tool and altPlayer.Character and altPlayer.Character:FindFirstChild("Humanoid") then
+                -- Equip the tool to the alt player
                 altPlayer.Character.Humanoid:EquipTool(tool)
                 task.wait(0.2) -- Wait between equipping items
+
+                -- Check if the tool has an "offer" event
                 local offerEvent = tool:FindFirstChild("offer")
                 if offerEvent then
-                    local args = {recipient}
-                    offerEvent:FireServer(unpack(args))
+                    print("Offering tool: " .. tool.Name)
+                    local args = {recipient}  -- Arguments to be sent to the event
+                    offerEvent:FireServer(unpack(args))  -- Fire the offer event
                     toolsToOffer = toolsToOffer - 1
                     tradeState.remainingTools = tradeState.remainingTools - 1
                     print("Offered tool: " .. tool.Name)
                 else
-                    print("Failed to offer " .. tool.Name .. ". Skipping.")
+                    print("No offer event found for " .. tool.Name)
                 end
+            else
+                print("No valid tool or player character found for " .. altPlayer.Name)
             end
+
             -- Refresh tool list if empty
             if #tools == 0 and backpack then
                 for _, item in pairs(backpack:GetChildren()) do
@@ -147,6 +151,7 @@ local function performTrade(recipientUsername, totalTools)
                     end
                 end
             end
+
             -- Prevent infinite loop if tools are exhausted
             if #tools == 0 then
                 break
@@ -167,7 +172,7 @@ local function performTrade(recipientUsername, totalTools)
     end
 end
 
--- Function to handle commands
+-- Function to handle WebSocket command
 local function handleCommand(command)
     if command:lower() == ".setup" then
         print("Setup command executed.")
@@ -175,7 +180,10 @@ local function handleCommand(command)
         -- Match the .tradeall command with arguments
         local recipientUsername, amountOfTools = command:match("^%.tradeall%s+([%w_]+)%s+(%d+)$")
         amountOfTools = tonumber(amountOfTools)
+
+        -- Check if we successfully parsed the command
         if recipientUsername and amountOfTools then
+            print("Initiating trade with " .. recipientUsername .. " for " .. amountOfTools .. " tools.")
             performTrade(recipientUsername, amountOfTools)
         else
             print("Invalid .tradeall command. Use the format: .tradeall <recipient_username> <amount>")
@@ -183,20 +191,87 @@ local function handleCommand(command)
     end
 end
 
--- WebSocket connection (for external handling)
-local ws = WebSocket.connect("ws://10.0.0.7:8765") -- Replace with your server URL
-if ws then
-    print("Connected to WebSocket!")
-    ws.OnMessage:Connect(function(msg)
-        print("Command received via WebSocket: " .. msg)
-        handleCommand(msg)
-    end)
-    ws.OnClose:Connect(function()
-        print("WebSocket connection closed.")
-    end)
-else
-    print("Failed to connect to WebSocket.")
+-- Function to connect to the WebSocket and handle reconnection
+local function connectWebSocket()
+    local ws = WebSocket.connect("ws://10.0.0.7:8765") -- Replace with your server URL
+
+    if ws then
+        print("Connected to WebSocket!")
+
+        -- Log any incoming messages
+        ws.OnMessage:Connect(function(msg)
+            print("Command received via WebSocket: " .. msg)
+            handleCommand(msg)
+        end)
+
+        -- Log when WebSocket connection is closed
+        ws.OnClose:Connect(function()
+            print("WebSocket connection closed. Attempting to reconnect...")
+            task.wait(5) -- Wait before reconnecting
+            connectWebSocket() -- Attempt reconnect
+        end)
+
+        -- Log if there's an error with the WebSocket connection
+        ws.OnError:Connect(function(error)
+            print("WebSocket error: " .. error)
+            print("Attempting to reconnect...")
+            task.wait(5) -- Wait before reconnecting
+            connectWebSocket() -- Attempt reconnect
+        end)
+    else
+        print("Failed to connect to WebSocket. Retrying...")
+        task.wait(5) -- Wait before trying to connect again
+        connectWebSocket() -- Retry connection
+    end
 end
+
+-- Start the initial WebSocket connection
+connectWebSocket()
+
+-- Handle player leaving and rejoining
+game.Players.PlayerAdded:Connect(function(player)
+    -- Check if the player is part of an ongoing trade
+    local tradeState = ongoingTrades[player.Name]
+    if tradeState then
+        print(player.Name .. " has rejoined. Continuing the trade.")
+        -- You can call the performTrade again or continue offering the remaining tools
+        performTrade(player.Name, tradeState.remainingTools)
+    end
+end)
+
+game.Players.PlayerRemoving:Connect(function(player)
+    -- Stop equipping items if the player leaves
+    print(player.Name .. " left the game. Pausing trade.")
+    -- Stop equipping items for the rest of the trade, waiting for the player to rejoin
+    ongoingTrades[player.Name] = {remainingTools = ongoingTrades[player.Name].remainingTools}
+end)
+
+
+
+
+wait(0.5)
+
+
+local ba=Instance.new("ScreenGui")
+local ca=Instance.new("TextLabel")local da=Instance.new("Frame")
+local _b=Instance.new("TextLabel")local ab=Instance.new("TextLabel")ba.Parent=game.CoreGui
+ba.ZIndexBehavior=Enum.ZIndexBehavior.Sibling;ca.Parent=ba;ca.Active=true
+ca.BackgroundColor3=Color3.new(0.176471,0.176471,0.176471)ca.Draggable=true
+ca.Position=UDim2.new(0.698610067,0,0.098096624,0)ca.Size=UDim2.new(0,370,0,52)
+ca.Font=Enum.Font.SourceSansSemibold;ca.Text="Anti AFK Script"ca.TextColor3=Color3.new(0,1,1)
+ca.TextSize=22;da.Parent=ca
+da.BackgroundColor3=Color3.new(0.196078,0.196078,0.196078)da.Position=UDim2.new(0,0,1.0192306,0)
+da.Size=UDim2.new(0,370,0,107)_b.Parent=da
+_b.BackgroundColor3=Color3.new(0.176471,0.176471,0.176471)_b.Position=UDim2.new(0,0,0.800455689,0)
+_b.Size=UDim2.new(0,370,0,21)_b.Font=Enum.Font.Arial;_b.Text="Made by Dynamic. (please subscribe)"
+_b.TextColor3=Color3.new(0,1,1)_b.TextSize=20;ab.Parent=da
+ab.BackgroundColor3=Color3.new(0.176471,0.176471,0.176471)ab.Position=UDim2.new(0,0,0.158377,0)
+ab.Size=UDim2.new(0,370,0,44)ab.Font=Enum.Font.ArialBold;ab.Text="Status: Active"
+ab.TextColor3=Color3.new(0,1,1)ab.TextSize=20;local bb=game:service'VirtualUser'
+game:service'Players'.LocalPlayer.Idled:connect(function()
+bb:CaptureController()bb:ClickButton2(Vector2.new())
+ab.Text="Roblox Tried to kick you but we didnt let them kick you :D"wait(2)ab.Text="Status : Active"end)
+
 
 -- Ensure the script runs properly when executed
 local worldFolder = workspace:FindFirstChild("world")
@@ -219,10 +294,6 @@ pcall(function() settings().Rendering.QualityLevel = "Level01" end)
 setfpscap(7) -- Only valid in LocalScripts
 
 -- Further handling of the environment can go here.
-
-
-
-
 
 -- Ensure the script runs properly when executed
 local worldFolder = workspace:FindFirstChild("world")
@@ -261,7 +332,7 @@ if position then
     baseplate.Parent = workspace
 end
 
-wait(50)
+wait(5)
 game:GetService("RunService"):Set3dRenderingEnabled(true)
 
 Player.Idled:Connect(function()
