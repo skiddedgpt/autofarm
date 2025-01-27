@@ -1,105 +1,247 @@
--- Check the value of getgenv().boxtrain
-if getgenv().boxtrain == "true" then
-    print("Box train is true. Loading boxing training script.")
-    print("Boxing training script loaded.")
+-- Define a global table with alternate usernames
+getgenv().alts = {
+    Alt1 = "vdhcdropper65", -- Replace with the first alt username
+    Alt2 = "vdhcdropper66", -- Replace with the second alt username
+    Alt3 = "hifortnitekids2" -- Replace with the third alt username
+}
 
-    -- Ensure the game is fully loaded
-    if not game:IsLoaded() then
-        game.Loaded:Wait()
-        task.wait(2)
-    end
+-- Persistent table to track ongoing trades
+local ongoingTrades = {}
+local disconnectedAlts = {} -- Tracks alts that are disconnected due to low items
 
-    -- Get the local player
-    local player = game:GetService("Players").LocalPlayer
-
-    -- Wait until the player and their character are loaded
-    repeat task.wait(0.2) until player and player.Character
-
-    -- Function to safely wait for a child with a timeout
-    local function waitForChildWithTimeout(parent, childName, timeout)
-        local child = parent:FindFirstChild(childName)
-        local startTime = tick()
-        while not child and tick() - startTime < timeout do
-            child = parent:FindFirstChild(childName)
-            task.wait(0.1)
+-- Function to wait for a player with an indefinite wait
+local function waitForPlayer(playerName)
+    while true do
+        local player = game.Players:FindFirstChild(playerName)
+        if player then
+            return player
         end
-        return child
+        task.wait(1) -- Check every second
     end
-
-    -- Wait for "leaderstats" with a timeout of 10 seconds
-    local leaderstats = waitForChildWithTimeout(player, "leaderstats", 10)
-    if not leaderstats then
-        warn("Failed to find 'leaderstats' within the timeout period.")
-    end
-
-    -- Define target positions
-    local firstTargetPosition = Vector3.new(-277.90643310546875, 22.570423126220703, -1111.6998291015625)
-    local secondTargetPosition = CFrame.new(-237.21588134765625, 22.067293167114258, -1141.951171875)
-
-    -- Teleport the player to the first target position
-    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-        player.Character.HumanoidRootPart.CFrame = CFrame.new(firstTargetPosition)
-    else
-        warn("Failed to teleport player. 'HumanoidRootPart' not found.")
-    end
-
-    -- Function to perform normal attack with "Combat" tool
-    local function performNormalAttack()
-        if player.Backpack:FindFirstChild("Combat") then
-            player.Backpack.Combat.Parent = player.Character -- Move tool to character
-        end
-
-        if player.Character:FindFirstChild("Combat") then
-            player.Character.Combat:Activate() -- Start attacking
-            player.Character.Combat:Deactivate() -- Stop attacking
-        else
-            warn("Failed to perform attack. 'Combat' tool not found.")
-        end
-    end
-
-    -- Perform normal attack for 5 minutes
-    local endTime = os.time() + 300 -- 300 seconds = 5 minutes
-    repeat
-        performNormalAttack()
-        task.wait(0.5) -- Adjust interval between attacks as needed
-    until os.time() >= endTime
-
-    -- Wait for 3 seconds after attacking
-    task.wait(3)
-
-    -- Function to teleport the player to the second target position
-    local function teleportPlayer()
-        if game.Players.LocalPlayer and game.Players.LocalPlayer.Character then
-            local character = game.Players.LocalPlayer.Character
-            if character:FindFirstChild("HumanoidRootPart") then
-                character.HumanoidRootPart.CFrame = secondTargetPosition
-            else
-                warn("HumanoidRootPart not found.")
-            end
-        else
-            warn("LocalPlayer or Character not found.")
-        end
-    end
-
-    -- Teleport the player to the second target position
-    teleportPlayer()
-
-    -- Function to buy the item
-    local function buyItem()
-        -- Find the item in the shop
-        local itemName = "Boxing Moveset (Require: Max Box Stat) - $0"
-        local itemToBuy = workspace.Ignored.Shop:FindFirstChild(itemName)
-
-        if itemToBuy then
-            -- Click the item's ClickDetector
-            fireclickdetector(itemToBuy.ClickDetector)
-        else
-            warn(itemName .. " not found in the shop.")
-        end
-    end
-
-    -- Buy the item
-    buyItem()
-else
-    print("Box train is false. Script will not run.")
 end
+
+-- Function to count active alts
+local function getActiveAlts()
+    local activeAlts = {}
+    for _, altUsername in pairs(getgenv().alts) do
+        local altPlayer = game.Players:FindFirstChild(altUsername)
+        if altPlayer and not disconnectedAlts[altUsername] then
+            table.insert(activeAlts, altPlayer)
+        end
+    end
+    return activeAlts
+end
+
+-- Function to check if a tool should be excluded
+local function shouldExcludeTool(tool)
+    local excludedNames = { "Treasure Map", "Bestiary", "Equipment Bag" }
+    local toolName = tool.Name
+
+    -- Check for exact matches
+    for _, excludedName in ipairs(excludedNames) do
+        if toolName == excludedName then
+            return true
+        end
+    end
+
+    -- Check if the name contains "Rod"
+    if toolName:find("Rod") then
+        return true
+    end
+
+    return false
+end
+
+-- Function to disconnect an alt from WebSocket
+local function disconnectAlt(altUsername)
+    print("Disconnecting alt due to low items: " .. altUsername)
+    disconnectedAlts[altUsername] = true
+end
+
+-- Function to perform trade and offer tools
+local function performTrade(recipientUsername, totalTools)
+    -- Save or load trade state
+    local tradeState = ongoingTrades[recipientUsername] or {remainingTools = totalTools}
+    tradeState.totalTools = totalTools
+    ongoingTrades[recipientUsername] = tradeState
+
+    -- Debugging print statements
+    print("Performing trade with: " .. recipientUsername)
+    print("Total tools to offer: " .. totalTools)
+
+    -- Wait for the recipient player to join, even if they join later
+    local recipient = waitForPlayer(recipientUsername)
+    if not recipient then
+        print("Recipient not found.")
+        return
+    end
+
+    local activeAlts = getActiveAlts()
+    local numAlts = #activeAlts
+    if numAlts == 0 then
+        print("No alts available to trade.")
+        return
+    end
+
+    -- Calculate tools per alt
+    local toolsPerAlt = math.floor(tradeState.remainingTools / numAlts)
+    local extraTools = tradeState.remainingTools % numAlts
+
+    print("Total tools: " .. tradeState.totalTools)
+    print("Active alts: " .. numAlts)
+    print("Tools per alt: " .. toolsPerAlt)
+    print("Extra tools to distribute: " .. extraTools)
+
+    -- Trade tools from each alt
+    for index, altPlayer in ipairs(activeAlts) do
+        local backpack = altPlayer:FindFirstChild("Backpack")
+        local tools = {}
+        if backpack then
+            for _, item in pairs(backpack:GetChildren()) do
+                if item:IsA("Tool") and not shouldExcludeTool(item) then
+                    table.insert(tools, item)
+                end
+            end
+        end
+
+        -- Disconnect alt if it has fewer than 100 tools
+        if #tools < 100 then
+            disconnectAlt(altPlayer.Name)
+            print(altPlayer.Name .. " disconnected due to low item count: " .. #tools)
+            continue
+        end
+
+        local toolsToOffer = toolsPerAlt
+
+        -- Distribute extra tools to the first few alts
+        if extraTools > 0 then
+            toolsToOffer = toolsToOffer + 1
+            extraTools = extraTools - 1
+        end
+
+        print(altPlayer.Name .. " is set to trade " .. toolsToOffer .. " tools.")
+        while toolsToOffer > 0 and tradeState.remainingTools > 0 do
+            local tool = table.remove(tools, 1) -- Take the first tool available
+            if tool and altPlayer.Character and altPlayer.Character:FindFirstChild("Humanoid") then
+                -- Equip the tool to the alt player
+                altPlayer.Character.Humanoid:EquipTool(tool)
+                task.wait(0.2) -- Wait between equipping items
+
+                -- Check if the tool has an "offer" event
+                local offerEvent = tool:FindFirstChild("offer")
+                if offerEvent then
+                    print("Offering tool: " .. tool.Name)
+                    local args = {recipient}  -- Arguments to be sent to the event
+                    offerEvent:FireServer(unpack(args))  -- Fire the offer event
+                    toolsToOffer = toolsToOffer - 1
+                    tradeState.remainingTools = tradeState.remainingTools - 1
+                    print("Offered tool: " .. tool.Name)
+                else
+                    print("No offer event found for " .. tool.Name)
+                end
+            else
+                print("No valid tool or player character found for " .. altPlayer.Name)
+            end
+
+            -- Refresh tool list if empty
+            if #tools == 0 and backpack then
+                for _, item in pairs(backpack:GetChildren()) do
+                    if item:IsA("Tool") and not shouldExcludeTool(item) and not table.find(tools, item) then
+                        table.insert(tools, item)
+                    end
+                end
+            end
+
+            -- Prevent infinite loop if tools are exhausted
+            if #tools == 0 then
+                break
+            end
+        end
+
+        if toolsToOffer > 0 then
+            print(altPlayer.Name .. " ran out of tools before completing their trade.")
+        end
+    end
+
+    -- Final check for any unoffered tools
+    if tradeState.remainingTools > 0 then
+        print("Not all tools could be traded. Remaining: " .. tradeState.remainingTools)
+    else
+        print("Trade successful. All " .. tradeState.totalTools .. " tools have been offered.")
+        ongoingTrades[recipientUsername] = nil -- Clear trade state on completion
+    end
+end
+
+-- Function to handle WebSocket command
+local function handleCommand(command)
+    if command:lower() == ".setup" then
+        print("Setup command executed.")
+    else
+        -- Match the .tradeall command with arguments
+        local recipientUsername, amountOfTools = command:match("^%.tradeall%s+([%w_]+)%s+(%d+)$")
+        amountOfTools = tonumber(amountOfTools)
+
+        -- Check if we successfully parsed the command
+        if recipientUsername and amountOfTools then
+            print("Initiating trade with " .. recipientUsername .. " for " .. amountOfTools .. " tools.")
+            performTrade(recipientUsername, amountOfTools)
+        else
+            print("Invalid .tradeall command. Use the format: .tradeall <recipient_username> <amount>")
+        end
+    end
+end
+
+-- Function to connect to the WebSocket and handle reconnection
+local function connectWebSocket()
+    local ws = WebSocket.connect("ws://10.0.0.7:8765") -- Replace with your server URL
+
+    if ws then
+        print("Connected to WebSocket!")
+
+        -- Log any incoming messages
+        ws.OnMessage:Connect(function(msg)
+            print("Command received via WebSocket: " .. msg)
+            handleCommand(msg)
+        end)
+
+        -- Log when WebSocket connection is closed
+        ws.OnClose:Connect(function()
+            print("WebSocket connection closed. Attempting to reconnect...")
+            task.wait(5) -- Wait before reconnecting
+            connectWebSocket() -- Attempt reconnect
+        end)
+
+        -- Log if there's an error with the WebSocket connection
+        ws.OnError:Connect(function(error)
+            print("WebSocket error: " .. error)
+            print("Attempting to reconnect...")
+            task.wait(5) -- Wait before reconnecting
+            connectWebSocket() -- Attempt reconnect
+        end)
+    else
+        print("Failed to connect to WebSocket. Retrying...")
+        task.wait(5) -- Wait before trying to connect again
+        connectWebSocket() -- Retry connection
+    end
+end
+
+-- Start the initial WebSocket connection
+connectWebSocket()
+
+-- Handle player leaving and rejoining
+game.Players.PlayerAdded:Connect(function(player)
+    -- Check if the player is part of an ongoing trade
+    local tradeState = ongoingTrades[player.Name]
+    if tradeState then
+        print(player.Name .. " has rejoined. Continuing the trade.")
+        -- You can call the performTrade again or continue offering the remaining tools
+        performTrade(player.Name, tradeState.remainingTools)
+    end
+end)
+
+game.Players.PlayerRemoving:Connect(function(player)
+    -- Stop equipping items if the player leaves
+    print(player.Name .. " left the game. Pausing trade.")
+    -- Stop equipping items for the rest of the trade, waiting for the player to rejoin
+    ongoingTrades[player.Name] = {remainingTools = ongoingTrades[player.Name].remainingTools}
+end)
